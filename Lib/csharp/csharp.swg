@@ -1052,3 +1052,53 @@ SWIG_CSBODY_TYPEWRAPPER(internal, protected, internal, SWIGTYPE)
     } %}
 */
 
+// Add a macro to define boiler plate exception translation code for directors
+// Signals a pending exception in the wrapper layer
+
+#define SWIG_DIRECTOR_SIGNAL_EXCEPTION_FUNCTION_NAME(QUALIFIEDCLASS) \
+  $imclassname.SwigDirector_signal_$descriptor(QUALIFIEDCLASS)
+
+#define SWIG_DIRECTOR_DEFINE_EXCEPTION_HELPER(QUALIFIEDCLASS) \
+  SWIG_DIRECTOR_DEFINE_EXCEPTION_HELPER_INTERNAL(QUALIFIEDCLASS, SwigDirector_signal_ ## $descriptor(QUALIFIEDCLASS))
+
+#define SWIG_DIRECTOR_DECLARE_EXCEPTION_HELPER(QUALIFIEDCLASS,SIGNATURE...) \
+  SWIG_DIRECTOR_DECLARE_EXCEPTION_HELPER_INTERNAL(SwigDirector_signal_ ## $descriptor(QUALIFIEDCLASS), SIGNATURE)
+
+%define SWIG_DIRECTOR_DECLARE_EXCEPTION_HELPER_INTERNAL(FUNCTIONNAME,SIGNATURE...)
+%pragma(csharp) imclasscode = %{
+  [global::System.Runtime.InteropServices.DllImport("$dllimport", EntryPoint= # FUNCTIONNAME)]
+  public static extern bool FUNCTIONNAME(SIGNATURE);
+%}
+%enddef
+
+%define SWIG_DIRECTOR_DEFINE_EXCEPTION_HELPER_INTERNAL(QUALIFIEDCLASS, FUNCTIONNAME)
+SWIG_DIRECTOR_DECLARE_EXCEPTION_HELPER_INTERNAL(FUNCTIONNAME,string message)
+%{
+
+void SwigDirector_throw_$descriptor(QUALIFIEDCLASS) (void *& exception) {
+  if (exception) {
+    QUALIFIEDCLASS copy(*(QUALIFIEDCLASS*)exception);
+    delete (QUALIFIEDCLASS*)exception;
+    exception = 0;
+    throw copy;
+  }
+}
+
+extern "C"
+void FUNCTIONNAME(const char * msg) {
+  // TODO: what behavior if unexpectedly signal exception when already pending.  assert? Overwrite instead?
+  if (Swig_pendingException == 0) {
+    Swig_pendingException = (void*)new QUALIFIEDCLASS(msg);
+    Swig_throwfn = &SwigDirector_throw_$descriptor(QUALIFIEDCLASS) ;
+  }
+} 
+
+%}
+%enddef
+
+// Declare the generic default director exception function defined in director.swg
+// TODO this probably needs %pragma(csharp,if="module:directors") 
+//   or this needs to be in director.swg (which is not possible now)
+// TODO this is broken if directors are not enabled right now.
+// Can just copy the appropriate definition there
+SWIG_DIRECTOR_DECLARE_EXCEPTION_HELPER(Swig::DirectorException,string exceptiontypename, string message)
