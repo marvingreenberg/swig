@@ -90,7 +90,7 @@ SWIGINTERN const char * SWIG_UnpackData(const char *c, void *ptr, size_t sz) {
 %typemap(ctype) double,             const double &             "double"
 %typemap(ctype) void                                           "void"
 
-%typemap(imtype) bool,               const bool &               "bool"
+%typemap(imtype, null="false") bool, const bool &               "bool"
 %typemap(imtype) char,               const char &               "char"
 %typemap(imtype) signed char,        const signed char &        "sbyte"
 %typemap(imtype) unsigned char,      const unsigned char &      "byte"
@@ -104,7 +104,7 @@ SWIGINTERN const char * SWIG_UnpackData(const char *c, void *ptr, size_t sz) {
 %typemap(imtype) unsigned long long, const unsigned long long & "ulong"
 %typemap(imtype) float,              const float &              "float"
 %typemap(imtype) double,             const double &             "double"
-%typemap(imtype) void                                           "void"
+%typemap(imtype, null="")            void                       "void"
 
 %typemap(cstype) bool,               const bool &               "bool"
 %typemap(cstype) char,               const char &               "char"
@@ -123,33 +123,33 @@ SWIGINTERN const char * SWIG_UnpackData(const char *c, void *ptr, size_t sz) {
 %typemap(cstype) void                                           "void"
 
 %typemap(ctype) char *, char *&, char[ANY], char[]   "char *"
-%typemap(imtype) char *, char *&, char[ANY], char[]   "string"
+%typemap(imtype, null="null") char *, char *&, char[ANY], char[]   "string"
 %typemap(cstype) char *, char *&, char[ANY], char[]   "string"
 
 /* Non primitive types */
 %typemap(ctype) SWIGTYPE "void *"
-%typemap(imtype, out="global::System.IntPtr") SWIGTYPE "global::System.Runtime.InteropServices.HandleRef"
+%typemap(imtype, out="global::System.IntPtr", null="(global::System.IntPtr)0") SWIGTYPE "global::System.Runtime.InteropServices.HandleRef"
 %typemap(cstype) SWIGTYPE "$&csclassname"
 
 %typemap(ctype) SWIGTYPE [] "void *"
-%typemap(imtype, out="global::System.IntPtr") SWIGTYPE [] "global::System.Runtime.InteropServices.HandleRef"
+%typemap(imtype, out="global::System.IntPtr", null="(global::System.IntPtr)0") SWIGTYPE [] "global::System.Runtime.InteropServices.HandleRef"
 %typemap(cstype) SWIGTYPE [] "$csclassname"
 
 %typemap(ctype) SWIGTYPE * "void *"
-%typemap(imtype, out="global::System.IntPtr") SWIGTYPE * "global::System.Runtime.InteropServices.HandleRef"
+%typemap(imtype, out="global::System.IntPtr", null="(global::System.IntPtr)0") SWIGTYPE * "global::System.Runtime.InteropServices.HandleRef"
 %typemap(cstype) SWIGTYPE * "$csclassname"
 
 %typemap(ctype) SWIGTYPE & "void *"
-%typemap(imtype, out="global::System.IntPtr") SWIGTYPE & "global::System.Runtime.InteropServices.HandleRef"
+%typemap(imtype, out="global::System.IntPtr", null="(global::System.IntPtr)0") SWIGTYPE & "global::System.Runtime.InteropServices.HandleRef"
 %typemap(cstype) SWIGTYPE & "$csclassname"
 
 %typemap(ctype) SWIGTYPE && "void *"
-%typemap(imtype, out="global::System.IntPtr") SWIGTYPE && "global::System.Runtime.InteropServices.HandleRef"
+%typemap(imtype, out="global::System.IntPtr", null="(global::System.IntPtr)0") SWIGTYPE && "global::System.Runtime.InteropServices.HandleRef"
 %typemap(cstype) SWIGTYPE && "$csclassname"
 
 /* pointer to a class member */
 %typemap(ctype) SWIGTYPE (CLASS::*) "char *"
-%typemap(imtype) SWIGTYPE (CLASS::*) "string"
+%typemap(imtype, null="null") SWIGTYPE (CLASS::*) "string"
 %typemap(cstype) SWIGTYPE (CLASS::*) "$csclassname"
 
 /* The following are the in and out typemaps. These are the PInvoke code generating typemaps for converting from C# to C and visa versa. */
@@ -835,7 +835,7 @@ SWIGINTERN const char * SWIG_UnpackData(const char *c, void *ptr, size_t sz) {
 
 /* Pointer reference typemaps */
 %typemap(ctype) SWIGTYPE *const& "void *"
-%typemap(imtype, out="global::System.IntPtr") SWIGTYPE *const& "global::System.Runtime.InteropServices.HandleRef"
+%typemap(imtype, out="global::System.IntPtr", null="(global::System.IntPtr)0") SWIGTYPE *const& "global::System.Runtime.InteropServices.HandleRef"
 %typemap(cstype) SWIGTYPE *const& "$*csclassname"
 %typemap(csin) SWIGTYPE *const& "$*csclassname.getCPtr($csinput)"
 %typemap(csout, excode=SWIGEXCODE) SWIGTYPE *const& {
@@ -1034,7 +1034,7 @@ SWIG_CSBODY_TYPEWRAPPER(internal, protected, internal, SWIGTYPE)
   }
 %}
 
-%typemap(imtype, out="global::System.IntPtr") char *, char[ANY], char[]   "global::System.Runtime.InteropServices.HandleRef"
+%typemap(imtype, out="global::System.IntPtr", null="(global::System.IntPtr)0") char *, char[ANY], char[]   "global::System.Runtime.InteropServices.HandleRef"
 %typemap(out) char *, char[ANY], char[] %{ $result = $1; %}
 %typemap(csin) char *, char[ANY], char[] "new $imclassname.SWIGStringMarshal($csinput).swigCPtr"
 %typemap(csout, excode=SWIGEXCODE) char *, char[ANY], char[] {
