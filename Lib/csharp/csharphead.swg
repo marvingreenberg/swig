@@ -37,6 +37,7 @@ typedef enum {
 
 typedef void (SWIGSTDCALL* SWIG_CSharpExceptionCallback_t)(const char *);
 typedef void (SWIGSTDCALL* SWIG_CSharpExceptionArgumentCallback_t)(const char *, const char *);
+typedef void (SWIGSTDCALL* SWIG_CSharpExceptionDynamicCallback_t)(const char *, const char *);
 
 typedef struct {
   SWIG_CSharpExceptionCodes code;
@@ -68,6 +69,9 @@ static SWIG_CSharpExceptionArgument_t SWIG_csharp_exceptions_argument[] = {
   { SWIG_CSharpArgumentOutOfRangeException, NULL }
 };
 
+// Callback for dynamic user exceptions constructible from a string message
+static SWIG_CSharpExceptionDynamicCallback_t SWIG_csharp_exception_dynamic = NULL;
+
 static void SWIGUNUSED SWIG_CSharpSetPendingException(SWIG_CSharpExceptionCodes code, const char *msg) {
   SWIG_CSharpExceptionCallback_t callback = SWIG_csharp_exceptions[SWIG_CSharpApplicationException].callback;
   if ((size_t)code < sizeof(SWIG_csharp_exceptions)/sizeof(SWIG_CSharpException_t)) {
@@ -83,6 +87,11 @@ static void SWIGUNUSED SWIG_CSharpSetPendingExceptionArgument(SWIG_CSharpExcepti
   }
   callback(msg, param_name);
 }
+
+static void SWIGUNUSED SWIG_CSharpSetPendingExceptionDynamic(const char * qualifiedtypename, const char *msg) {
+  SWIG_csharp_exception_dynamic(qualifiedtypename, msg);
+}
+
 %}
 
 %insert(runtime) %{
@@ -125,6 +134,14 @@ SWIGEXPORT void SWIGSTDCALL SWIGRegisterExceptionArgumentCallbacks_$module(
   SWIG_csharp_exceptions_argument[SWIG_CSharpArgumentNullException].callback = argumentNullCallback;
   SWIG_csharp_exceptions_argument[SWIG_CSharpArgumentOutOfRangeException].callback = argumentOutOfRangeCallback;
 }
+
+#ifdef __cplusplus
+extern "C" 
+#endif
+SWIGEXPORT void SWIGSTDCALL SWIGRegisterExceptionDynamicCallback_$module(
+                                                SWIG_CSharpExceptionDynamicCallback_t exceptionDynamicCallback) {
+  SWIG_csharp_exception_dynamic = exceptionDynamicCallback;
+}
 %}
 
 %pragma(csharp) imclasscode=%{
@@ -132,6 +149,7 @@ SWIGEXPORT void SWIGSTDCALL SWIGRegisterExceptionArgumentCallbacks_$module(
 
     public delegate void ExceptionDelegate(string message);
     public delegate void ExceptionArgumentDelegate(string message, string paramName);
+    public delegate void ExceptionDynamicDelegate(string qualifiedtypename,string message);
 
     static ExceptionDelegate applicationDelegate = new ExceptionDelegate(SetPendingApplicationException);
     static ExceptionDelegate arithmeticDelegate = new ExceptionDelegate(SetPendingArithmeticException);
@@ -148,6 +166,8 @@ SWIGEXPORT void SWIGSTDCALL SWIGRegisterExceptionArgumentCallbacks_$module(
     static ExceptionArgumentDelegate argumentDelegate = new ExceptionArgumentDelegate(SetPendingArgumentException);
     static ExceptionArgumentDelegate argumentNullDelegate = new ExceptionArgumentDelegate(SetPendingArgumentNullException);
     static ExceptionArgumentDelegate argumentOutOfRangeDelegate = new ExceptionArgumentDelegate(SetPendingArgumentOutOfRangeException);
+
+    static ExceptionDynamicDelegate exceptionDynamicDelegate = new ExceptionDynamicDelegate(SetPendingExceptionDynamic);
 
     [global::System.Runtime.InteropServices.DllImport("$dllimport", EntryPoint="SWIGRegisterExceptionCallbacks_$module")]
     public static extern void SWIGRegisterExceptionCallbacks_$module(
@@ -168,6 +188,10 @@ SWIGEXPORT void SWIGSTDCALL SWIGRegisterExceptionArgumentCallbacks_$module(
                                 ExceptionArgumentDelegate argumentDelegate,
                                 ExceptionArgumentDelegate argumentNullDelegate,
                                 ExceptionArgumentDelegate argumentOutOfRangeDelegate);
+
+    [global::System.Runtime.InteropServices.DllImport("$dllimport", EntryPoint="SWIGRegisterExceptionDynamicCallback_$module")]
+    public static extern void SWIGRegisterExceptionDynamicCallback_$module(
+                                ExceptionDynamicDelegate exceptionDynamicDelegate);
 
     static void SetPendingApplicationException(string message) {
       SWIGPendingException.Set(new global::System.ApplicationException(message, SWIGPendingException.Retrieve()));
@@ -217,6 +241,24 @@ SWIGEXPORT void SWIGSTDCALL SWIGRegisterExceptionArgumentCallbacks_$module(
       SWIGPendingException.Set(new global::System.ArgumentOutOfRangeException(paramName, message));
     }
 
+    static void SetPendingExceptionDynamic(string typename, string message) {
+      global::System.Type type;
+      global::System.Exception exceptionDynamic;
+      global::System.Console.WriteLine("SetPendingExceptiondynamic " + typename + " " + message);        
+
+      try {
+        type = global::System.Type.GetType(typename, true); // true: throw if not found
+	exceptionDynamic = global::System.Activator.CreateInstance(type, message) as global::System.Exception;
+	global::System.Console.WriteLine("Activator.CreateInstance Created exception " + // TODO
+                          typename + " with  '" + exceptionDynamic.Message +"'");
+        SWIGPendingException.Set(exceptionDynamic);
+      } catch (global::System.Exception e) {      // TODO remove 'e' after removing debug line 
+        // any problem creating a dynamic exception, just create an ApplicationException
+        global::System.Console.WriteLine("Some problem creating a '" + typename + "': " + e.Message);  //TODO
+        SetPendingApplicationException("<InvalidException:" + typename + ">: " + message);
+      }
+    }
+
     static SWIGExceptionHelper() {
       SWIGRegisterExceptionCallbacks_$module(
                                 applicationDelegate,
@@ -235,6 +277,9 @@ SWIGEXPORT void SWIGSTDCALL SWIGRegisterExceptionArgumentCallbacks_$module(
                                 argumentDelegate,
                                 argumentNullDelegate,
                                 argumentOutOfRangeDelegate);
+
+      SWIGRegisterExceptionDynamicCallback_$module(
+                                exceptionDynamicDelegate);
     }
   }
 
