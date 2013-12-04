@@ -447,6 +447,9 @@ public:
       Replaceall(imclass_class_code, "$module", module_class_name);
       Replaceall(imclass_class_code, "$imclassname", imclass_name);
       Replaceall(imclass_class_code, "$dllimport", dllimport);
+
+      Swig_cparse_replace_descriptor(imclass_class_code);
+
       Printv(f_im, imclass_class_code, NIL);
       Printv(f_im, imclass_cppcasts_code, NIL);
 
@@ -585,6 +588,11 @@ public:
     Delete(namespce);
     namespce = NULL;
     n_dmethods = 0;
+
+    Swig_cparse_replace_descriptor(f_init);
+    Swig_cparse_replace_descriptor(f_header);
+    Swig_cparse_replace_descriptor(f_directors);
+    Swig_cparse_replace_descriptor(f_runtime);
 
     /* Close all of the files */
     Dump(f_runtime, f_begin);
@@ -1929,6 +1937,9 @@ public:
       Replaceall(proxy_class_code, "$dllimport", dllimport);
       Replaceall(proxy_class_constants_code, "$dllimport", dllimport);
 
+      Swig_cparse_replace_descriptor(proxy_class_def);
+      Swig_cparse_replace_descriptor(proxy_class_code);
+
       Printv(f_proxy, proxy_class_def, proxy_class_code, NIL);
 
       // Write out all the constants
@@ -3210,6 +3221,7 @@ public:
     Replaceall(swigtype, "$module", module_class_name);
     Replaceall(swigtype, "$imclassname", imclass_name);
     Replaceall(swigtype, "$dllimport", dllimport);
+    Swig_cparse_replace_descriptor(swigtype);
 
     Printv(f_swigtype, swigtype, NIL);
 
