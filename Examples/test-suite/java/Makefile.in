@@ -16,6 +16,7 @@ C_TEST_CASES = \
 	java_lib_various
 
 CPP_TEST_CASES = \
+	director_exception_feature \
 	enum_thorough_proper \
 	enum_thorough_simple \
 	enum_thorough_typeunsafe \
@@ -24,7 +25,6 @@ CPP_TEST_CASES = \
 	java_constants \
 	java_director \
 	java_director_assumeoverride \
-	java_director_exception_feature \
 	java_director_exception_feature_nspace \
 	java_enums \
 	java_jnitypes \
