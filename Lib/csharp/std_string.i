@@ -19,9 +19,10 @@ namespace std {
 
 class string;
 
-// string
+// string 
+// TODO  Need to add more "null" strings to other imtypes, lots of places?
 %typemap(ctype) string "char *"
-%typemap(imtype) string "string"
+%typemap(imtype, null="null") string "string"      
 %typemap(cstype) string "string"
 
 %typemap(csdirectorin) string "$iminput"
@@ -45,7 +46,7 @@ class string;
 %typemap(directorin) string %{ $input = SWIG_csharp_string_callback($1.c_str()); %}
 
 %typemap(csin) string "$csinput"
-%typemap(csout, excode=SWIGEXCODE) string {
+   %typemap(csout, null="null", excode=SWIGEXCODE) string {
     string ret = $imcall;$excode
     return ret;
   }
@@ -58,7 +59,7 @@ class string;
 
 // const string &
 %typemap(ctype) const string & "char *"
-%typemap(imtype) const string & "string"
+%typemap(imtype, null="null") const string & "string"
 %typemap(cstype) const string & "string"
 
 %typemap(csdirectorin) const string & "$iminput"
@@ -74,7 +75,7 @@ class string;
 %typemap(out) const string & %{ $result = SWIG_csharp_string_callback($1->c_str()); %}
 
 %typemap(csin) const string & "$csinput"
-%typemap(csout, excode=SWIGEXCODE) const string & {
+%typemap(csout, null="null", excode=SWIGEXCODE) const string & {
     string ret = $imcall;$excode
     return ret;
   }

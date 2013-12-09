@@ -447,6 +447,9 @@ public:
       Replaceall(imclass_class_code, "$module", module_class_name);
       Replaceall(imclass_class_code, "$imclassname", imclass_name);
       Replaceall(imclass_class_code, "$dllimport", dllimport);
+
+      Swig_cparse_replace_descriptor(imclass_class_code);
+
       Printv(f_im, imclass_class_code, NIL);
       Printv(f_im, imclass_cppcasts_code, NIL);
 
@@ -585,6 +588,11 @@ public:
     Delete(namespce);
     namespce = NULL;
     n_dmethods = 0;
+
+    Swig_cparse_replace_descriptor(f_init);
+    Swig_cparse_replace_descriptor(f_header);
+    Swig_cparse_replace_descriptor(f_directors);
+    Swig_cparse_replace_descriptor(f_runtime);
 
     /* Close all of the files */
     Dump(f_runtime, f_begin);
@@ -917,6 +925,9 @@ public:
       Swig_director_emit_dynamic_cast(n, f);
       String *actioncode = emit_action(n);
 
+      // TODO There was code in Java director doing something with throws attributes on the feature:except
+      // addThrow(n, "feature:except:throw", n); ...
+
       if (Cmp(nodeType(n), "constant") == 0)
         Swig_restore(n);
 
@@ -996,6 +1007,7 @@ public:
     if (!native_function_flag) {
       Wrapper_print(f, f_wrappers);
 
+      // TODO: anything to do here for director exceptions?
       // Handle %csexception which sets the canthrow attribute
       if (Getattr(n, "feature:except:canthrow"))
 	Setattr(n, "csharp:canthrow", "1");
@@ -1925,6 +1937,9 @@ public:
       Replaceall(proxy_class_code, "$dllimport", dllimport);
       Replaceall(proxy_class_constants_code, "$dllimport", dllimport);
 
+      Swig_cparse_replace_descriptor(proxy_class_def);
+      Swig_cparse_replace_descriptor(proxy_class_code);
+
       Printv(f_proxy, proxy_class_def, proxy_class_code, NIL);
 
       // Write out all the constants
@@ -2780,6 +2795,7 @@ public:
 
       // Use typemaps to transform type used in C# wrapper function (in proxy class) to type used in PInvoke function (in intermediary class)
       if ((tm = Getattr(p, "tmap:csin"))) {
+        // TODO Java has addThrows(n, "tmap:javain", p); here because new exception can be signaled.
 	substituteClassname(pt, tm);
 	Replaceall(tm, "$csinput", arg);
 	String *pre = Getattr(p, "tmap:csin:pre");
@@ -3205,6 +3221,7 @@ public:
     Replaceall(swigtype, "$module", module_class_name);
     Replaceall(swigtype, "$imclassname", imclass_name);
     Replaceall(swigtype, "$dllimport", dllimport);
+    Swig_cparse_replace_descriptor(swigtype);
 
     Printv(f_swigtype, swigtype, NIL);
 
@@ -3267,7 +3284,9 @@ public:
   void excodeSubstitute(Node *n, String *code, const String *typemap, Node *parameter) {
     String *excode_attribute = NewStringf("tmap:%s:excode", typemap);
     String *excode = Getattr(parameter, excode_attribute);
-    if (Getattr(n, "csharp:canthrow")) {
+
+    // TODO sort out canthrow versus catchlist
+    if (Getattr(n, "csharp:canthrow") || Getattr(n,"catchlist")) {
       int count = Replaceall(code, "$excode", excode);
       if (count < 1 || !excode) {
 	Swig_warning(WARN_CSHARP_EXCODE, input_file, line_number,
@@ -3615,6 +3634,9 @@ public:
 
       Printf(arg, "j%s", ln);
 
+      // TODO: Java has addThrows(n, "tmap:directorin", p);
+      // TODO: Java has addThrows(n, "tmap:out", p);
+
       /* And add to the upcall args */
       if (i > 0)
 	Printf(jupcall_args, ", ");
@@ -3770,8 +3792,16 @@ public:
 
       if (throw_parm_list)
 	Swig_typemap_attach_parms("throws", throw_parm_list, 0);
+      // TODO Java has additional: Swig_typemap_attach_parms("directorthrows", throw_parm_list, 0);
+      // Irrelevant now.  This is to construct a java exception specification, now
+      // Similar could be needed depending on how exceptions are signaled for director IM code
       for (p = throw_parm_list; p; p = nextSibling(p)) {
 	if (Getattr(p, "tmap:throws")) {
+	  // TODO: from java If %catches feature, it overrides specified throws().
+	  // If all this is just for the exception specification it is all moot
+	  // if (! catches_list)
+	  //   addThrow(n, "tmap:throws", p);
+	  //
 	  if (gencomma++) {
 	    Append(w->def, ", ");
 	    Append(declaration, ", ");
@@ -3804,6 +3834,9 @@ public:
 	Insert(tm, 0, "return ");
       Replaceall(tm, "\n ", "\n   "); // add extra indentation to code in typemap
 
+      /* Wrap the cscall with directorexception handling code */
+      directorExceptHandler(n, tm);
+
       // pre and post attribute support
       bool is_pre_code = Len(pre_code) > 0;
       bool is_post_code = Len(post_code) > 0;
@@ -3829,12 +3862,15 @@ public:
 
       Printf(w->code, "swig_callback%s(%s);\n", overloaded_name, jupcall_args);
 
+      Printf(w->code, "SwigDirector_throwIfSignaledException();\n");
+
       if (!is_void) {
 	String *jresult_str = NewString("jresult");
 	String *result_str = NewString("c_result");
 
 	/* Copy jresult into c_result... */
 	if ((tm = Swig_typemap_lookup("directorout", n, result_str, w))) {
+	  // TODO: addThrows(n, "tmap:directorout", n);  placeholder to sort out this throws,canThrow issues
 	  Replaceall(tm, "$input", jresult_str);
 	  Replaceall(tm, "$result", result_str);
 	  Printf(w->code, "%s\n", tm);
@@ -3934,6 +3970,90 @@ public:
     DelWrapper(w);
 
     return status;
+  }
+
+  /* ------------------------------------------------------------
+   * directorExceptHandler()
+   *
+   * Emit code to map C# exceptions back to C++ exceptions when
+   * feature("director:except") is appied to a method node
+   *
+   * Node n - method node, with attached director:except feature
+   * String cscall - C# call to wrap with director exception handling code
+
+   *
+   * This modifies the intermediate call to add exception handling
+   * ------------------------------------------------------------ */
+
+  void directorExceptHandler(Node *n, String * cscall) {
+
+    // TODO Java directorHanlder was passed a throwparmlist
+    // calculated elsewhere.  This code duplicates that, just for
+    // %catches.  Still need to think about the cases with exceptions
+    // from typemap conversions.  Maybe just require accurate %catches
+    // by users.  Maybe not.
+    ParmList *catches_list = Getattr(n, "catchlist");
+    if (catches_list) {
+      Swig_typemap_attach_parms("throws", catches_list, 0);
+      Swig_typemap_attach_parms("directorthrows", catches_list, 0);
+    //  for (Parm *p = catches_list; p; p = nextSibling(p)) {
+    //    addThrows(n, "tmap:throws", p);
+    //  }
+    }
+
+    String * directorexcept = Getattr(n, "feature:director:except");
+
+    if (!directorexcept) {
+      directorexcept = NewString("");
+      Printf(directorexcept, "\n  try {\n");
+      Printf(directorexcept, "     $action;\n");
+      Printf(directorexcept, "  }$directorthrowshandlers\n");
+      Printf(directorexcept, "  catch (global::System.Exception e) {\n");
+      Printf(directorexcept, "    $imclassname.SwigDirector_signal_$descriptor(Swig::DirectorException)(e.GetType().FullName, e.Message);\n");
+      Printf(directorexcept, "      return $null;\n");
+      Printf(directorexcept, "  }\n");
+    } else {
+      directorexcept = Copy(directorexcept);
+    }
+    // Can explicitly disable director:except by setting to "" or "0"
+    if (Len(directorexcept) > 0 && Cmp(directorexcept,"0") != 0) {
+      // Replace $directorthrowshandlers with any defined typemap handlers (or nothing)
+      if (Strstr(directorexcept, "$directorthrowshandlers")) {
+	String *directorthrowshandlers_code = NewString("");
+	for (Parm *p = catches_list; p; p = nextSibling(p)) {
+	  String *tm = Getattr(p, "tmap:directorthrows");
+	  String * excptype = Getattr(p,"type");
+
+	  if (tm) {
+	    String *directorthrows = Copy(tm);
+	    substituteClassname(excptype, directorthrows);
+	    Printf(directorthrowshandlers_code, "// Handle exception %s using directorthrows typemap\n", excptype);
+	    Printf(directorthrowshandlers_code, "%s", directorthrows);
+	    Delete(directorthrows);
+	  } else {
+	    String *t = Getattr(p,"type");
+	    Swig_warning(WARN_TYPEMAP_DIRECTORTHROWS_UNDEF, Getfile(n), Getline(n), "No directorthrows typemap defined for %s\n", SwigType_str(t, 0));
+	  }
+	}
+	Replaceall(directorexcept, "$directorthrowshandlers", directorthrowshandlers_code);
+	Delete(directorthrowshandlers_code);
+      }
+
+      // Look up the imtype null attribute for the current node
+      Swig_typemap_lookup("imtype",n,"",0);
+      if (String *nullret = Getattr(n, "tmap:imtype:null")) {
+	// various obj refs, usually the string "null", from csharp.swg
+	Replaceall(directorexcept,"$null",nullret);
+      } else {
+	Replaceall(directorexcept,"$null","0");  // default, most primitives
+      }
+
+      // Replace $action with the imcall
+      Replaceall(directorexcept, "$action", cscall);
+      Clear(cscall);
+      Printf(cscall, "    %s\n", directorexcept);
+    }
+    Delete(directorexcept);
   }
 
   /* ------------------------------------------------------------

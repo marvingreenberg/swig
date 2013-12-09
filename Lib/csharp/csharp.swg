@@ -90,7 +90,7 @@ SWIGINTERN const char * SWIG_UnpackData(const char *c, void *ptr, size_t sz) {
 %typemap(ctype) double,             const double &             "double"
 %typemap(ctype) void                                           "void"
 
-%typemap(imtype) bool,               const bool &               "bool"
+%typemap(imtype, null="false") bool, const bool &               "bool"
 %typemap(imtype) char,               const char &               "char"
 %typemap(imtype) signed char,        const signed char &        "sbyte"
 %typemap(imtype) unsigned char,      const unsigned char &      "byte"
@@ -104,7 +104,7 @@ SWIGINTERN const char * SWIG_UnpackData(const char *c, void *ptr, size_t sz) {
 %typemap(imtype) unsigned long long, const unsigned long long & "ulong"
 %typemap(imtype) float,              const float &              "float"
 %typemap(imtype) double,             const double &             "double"
-%typemap(imtype) void                                           "void"
+%typemap(imtype, null="")            void                       "void"
 
 %typemap(cstype) bool,               const bool &               "bool"
 %typemap(cstype) char,               const char &               "char"
@@ -123,33 +123,33 @@ SWIGINTERN const char * SWIG_UnpackData(const char *c, void *ptr, size_t sz) {
 %typemap(cstype) void                                           "void"
 
 %typemap(ctype) char *, char *&, char[ANY], char[]   "char *"
-%typemap(imtype) char *, char *&, char[ANY], char[]   "string"
+%typemap(imtype, null="null") char *, char *&, char[ANY], char[]   "string"
 %typemap(cstype) char *, char *&, char[ANY], char[]   "string"
 
 /* Non primitive types */
 %typemap(ctype) SWIGTYPE "void *"
-%typemap(imtype, out="global::System.IntPtr") SWIGTYPE "global::System.Runtime.InteropServices.HandleRef"
+%typemap(imtype, out="global::System.IntPtr", null="(global::System.IntPtr)0") SWIGTYPE "global::System.Runtime.InteropServices.HandleRef"
 %typemap(cstype) SWIGTYPE "$&csclassname"
 
 %typemap(ctype) SWIGTYPE [] "void *"
-%typemap(imtype, out="global::System.IntPtr") SWIGTYPE [] "global::System.Runtime.InteropServices.HandleRef"
+%typemap(imtype, out="global::System.IntPtr", null="(global::System.IntPtr)0") SWIGTYPE [] "global::System.Runtime.InteropServices.HandleRef"
 %typemap(cstype) SWIGTYPE [] "$csclassname"
 
 %typemap(ctype) SWIGTYPE * "void *"
-%typemap(imtype, out="global::System.IntPtr") SWIGTYPE * "global::System.Runtime.InteropServices.HandleRef"
+%typemap(imtype, out="global::System.IntPtr", null="(global::System.IntPtr)0") SWIGTYPE * "global::System.Runtime.InteropServices.HandleRef"
 %typemap(cstype) SWIGTYPE * "$csclassname"
 
 %typemap(ctype) SWIGTYPE & "void *"
-%typemap(imtype, out="global::System.IntPtr") SWIGTYPE & "global::System.Runtime.InteropServices.HandleRef"
+%typemap(imtype, out="global::System.IntPtr", null="(global::System.IntPtr)0") SWIGTYPE & "global::System.Runtime.InteropServices.HandleRef"
 %typemap(cstype) SWIGTYPE & "$csclassname"
 
 %typemap(ctype) SWIGTYPE && "void *"
-%typemap(imtype, out="global::System.IntPtr") SWIGTYPE && "global::System.Runtime.InteropServices.HandleRef"
+%typemap(imtype, out="global::System.IntPtr", null="(global::System.IntPtr)0") SWIGTYPE && "global::System.Runtime.InteropServices.HandleRef"
 %typemap(cstype) SWIGTYPE && "$csclassname"
 
 /* pointer to a class member */
 %typemap(ctype) SWIGTYPE (CLASS::*) "char *"
-%typemap(imtype) SWIGTYPE (CLASS::*) "string"
+%typemap(imtype, null="null") SWIGTYPE (CLASS::*) "string"
 %typemap(cstype) SWIGTYPE (CLASS::*) "$csclassname"
 
 /* The following are the in and out typemaps. These are the PInvoke code generating typemaps for converting from C# to C and visa versa. */
@@ -835,7 +835,7 @@ SWIGINTERN const char * SWIG_UnpackData(const char *c, void *ptr, size_t sz) {
 
 /* Pointer reference typemaps */
 %typemap(ctype) SWIGTYPE *const& "void *"
-%typemap(imtype, out="global::System.IntPtr") SWIGTYPE *const& "global::System.Runtime.InteropServices.HandleRef"
+%typemap(imtype, out="global::System.IntPtr", null="(global::System.IntPtr)0") SWIGTYPE *const& "global::System.Runtime.InteropServices.HandleRef"
 %typemap(cstype) SWIGTYPE *const& "$*csclassname"
 %typemap(csin) SWIGTYPE *const& "$*csclassname.getCPtr($csinput)"
 %typemap(csout, excode=SWIGEXCODE) SWIGTYPE *const& {
@@ -1034,7 +1034,7 @@ SWIG_CSBODY_TYPEWRAPPER(internal, protected, internal, SWIGTYPE)
   }
 %}
 
-%typemap(imtype, out="global::System.IntPtr") char *, char[ANY], char[]   "global::System.Runtime.InteropServices.HandleRef"
+%typemap(imtype, out="global::System.IntPtr", null="(global::System.IntPtr)0") char *, char[ANY], char[]   "global::System.Runtime.InteropServices.HandleRef"
 %typemap(out) char *, char[ANY], char[] %{ $result = $1; %}
 %typemap(csin) char *, char[ANY], char[] "new $imclassname.SWIGStringMarshal($csinput).swigCPtr"
 %typemap(csout, excode=SWIGEXCODE) char *, char[ANY], char[] {
@@ -1052,3 +1052,53 @@ SWIG_CSBODY_TYPEWRAPPER(internal, protected, internal, SWIGTYPE)
     } %}
 */
 
+// Add a macro to define boiler plate exception translation code for directors
+// Signals a pending exception in the wrapper layer
+
+#define SWIG_DIRECTOR_SIGNAL_EXCEPTION_FUNCTION_NAME(QUALIFIEDCLASS) \
+  $imclassname.SwigDirector_signal_$descriptor(QUALIFIEDCLASS)
+
+#define SWIG_DIRECTOR_DEFINE_EXCEPTION_HELPER(QUALIFIEDCLASS) \
+  SWIG_DIRECTOR_DEFINE_EXCEPTION_HELPER_INTERNAL(QUALIFIEDCLASS, SwigDirector_signal_ ## $descriptor(QUALIFIEDCLASS))
+
+#define SWIG_DIRECTOR_DECLARE_EXCEPTION_HELPER(QUALIFIEDCLASS,SIGNATURE...) \
+  SWIG_DIRECTOR_DECLARE_EXCEPTION_HELPER_INTERNAL(SwigDirector_signal_ ## $descriptor(QUALIFIEDCLASS), SIGNATURE)
+
+%define SWIG_DIRECTOR_DECLARE_EXCEPTION_HELPER_INTERNAL(FUNCTIONNAME,SIGNATURE...)
+%pragma(csharp) imclasscode = %{
+  [global::System.Runtime.InteropServices.DllImport("$dllimport", EntryPoint= # FUNCTIONNAME)]
+  public static extern bool FUNCTIONNAME(SIGNATURE);
+%}
+%enddef
+
+%define SWIG_DIRECTOR_DEFINE_EXCEPTION_HELPER_INTERNAL(QUALIFIEDCLASS, FUNCTIONNAME)
+SWIG_DIRECTOR_DECLARE_EXCEPTION_HELPER_INTERNAL(FUNCTIONNAME,string message)
+%{
+
+void SwigDirector_throw_$descriptor(QUALIFIEDCLASS) (void *& exception) {
+  if (exception) {
+    QUALIFIEDCLASS copy(*(QUALIFIEDCLASS*)exception);
+    delete (QUALIFIEDCLASS*)exception;
+    exception = 0;
+    throw copy;
+  }
+}
+
+extern "C"
+void FUNCTIONNAME(const char * msg) {
+  // TODO: what behavior if unexpectedly signal exception when already pending.  assert? Overwrite instead?
+  if (Swig_pendingException == 0) {
+    Swig_pendingException = (void*)new QUALIFIEDCLASS(msg);
+    Swig_throwfn = &SwigDirector_throw_$descriptor(QUALIFIEDCLASS) ;
+  }
+} 
+
+%}
+%enddef
+
+// Declare the generic default director exception function defined in director.swg
+// TODO this probably needs %pragma(csharp,if="module:directors") 
+//   or this needs to be in director.swg (which is not possible now)
+// TODO this is broken if directors are not enabled right now.
+// Can just copy the appropriate definition there
+SWIG_DIRECTOR_DECLARE_EXCEPTION_HELPER(Swig::DirectorException,string exceptiontypename, string message)
