@@ -12,6 +12,7 @@
 #include <string>
 %}
 
+%include <std_wstring.i>
 %include <std_string.i>
 
 // DEFINE exceptions in header section using std::runtime_error
@@ -21,6 +22,11 @@
 
   namespace MyNS {
 
+    struct ObjectReturn {
+      int x;
+      int y;
+      ObjectReturn(int a, int b): x(a), y(b) { }
+    };
     struct Exception1 : public std::runtime_error {
       Exception1(const std::string& what):runtime_error(what) {}
     };
@@ -63,9 +69,10 @@
   }
 %}
 
-// Override the director:except feature so exception specification is not violated
-// (Cannot use built-in default of throw DirectorException)
-%feature("director:except") MyNS::Foo::pong %{
+// Override the director:except feature so default exception is MyNS::Unexpected 
+// instead of default DirectorException
+%define UNEXPECTED_DEFAULT(METHOD) 
+%feature("director:except") METHOD %{
   jthrowable $error = jenv->ExceptionOccurred();
   if ($error) {
     jenv->ExceptionClear();
@@ -73,6 +80,10 @@
     throw ::MyNS::Unexpected(Swig::JavaExceptionMessage(jenv,$error).message());
   }
 %}
+%enddef
+UNEXPECTED_DEFAULT(MyNS::Foo::pong)
+UNEXPECTED_DEFAULT(MyNS::Foo::wstring_pong)
+UNEXPECTED_DEFAULT(MyNS::Foo::objectreturn_pong)
 
 // TODO 'throws' typemap emitted by emit_action (emit.cxx) has no way
 // to get access to language specific special variables like
@@ -147,6 +158,12 @@
 
 namespace MyNS {
 
+  struct ObjectReturn {
+    int x;
+    int y;
+    ObjectReturn(int a, int b);
+  };
+
   struct Exception1 {
       Exception1(const std::string& what);
       const char * what() const;
@@ -167,6 +184,10 @@ namespace MyNS {
 //   actual interface being wrapped does use them.
 %catches(MyNS::Exception1,MyNS::Exception2,MyNS::Unexpected) MyNS::Foo::pong;
 %catches(MyNS::Exception1,MyNS::Exception2,MyNS::Unexpected) MyNS::Bar::pong;
+%catches(MyNS::Exception1,MyNS::Exception2,MyNS::Unexpected) MyNS::Foo::wstring_pong;
+%catches(MyNS::Exception1,MyNS::Exception2,MyNS::Unexpected) MyNS::Bar::wstring_pong;
+%catches(MyNS::Exception1,MyNS::Exception2,MyNS::Unexpected) MyNS::Foo::objectreturn_pong;
+%catches(MyNS::Exception1,MyNS::Exception2,MyNS::Unexpected) MyNS::Bar::objectreturn_pong;
 
 %inline %{
 
@@ -179,6 +200,8 @@ public:
   // pong java implementation throws Exception1,Exception2,Unexpected,NullPointerException for 1,2,3,4
   virtual std::string ping(int excp) throw(int,MyNS::Exception2) = 0;
   virtual std::string pong(int excp) /* throws MyNS::Exception1 MyNS::Exception2 MyNS::Unexpected) */ = 0;
+  virtual std::wstring wstring_pong(int excp) /* throws MyNS::Exception1 MyNS::Exception2 MyNS::Unexpected) */ = 0;
+  virtual ObjectReturn objectreturn_pong(int excp) /* throws MyNS::Exception1 MyNS::Exception2 MyNS::Unexpected) */ = 0;
   virtual std::string genericpong(int excp) /* unspecified throws - exception is always DirectorException in C++, translated back to whatever thrown in java */ = 0;
   virtual std::string directorthrows_warning(int excp) throw(double) {}
 };
@@ -199,11 +222,20 @@ public:
     return delegate->pong(excp);
   }
 
+  virtual std::wstring wstring_pong(int excp) /* throws MyNS::Exception1,MyNS::Exception2,MyNS::Unexpected */
+  {
+    return delegate->wstring_pong(excp);
+  }
+
+  virtual MyNS::ObjectReturn objectreturn_pong(int excp) /* throws MyNS::Exception1,MyNS::Exception2,MyNS::Unexpected */
+  {
+    return delegate->objectreturn_pong(excp);
+  }
+
   virtual std::string genericpong(int excp)
   {
     return delegate->genericpong(excp);
   }
-
 private:
   Foo * delegate;
 };

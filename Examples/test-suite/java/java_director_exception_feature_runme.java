@@ -15,6 +15,8 @@ class java_director_exception_feature_Consts {
     public static final String GENERICPONGEXCP3 = "GenericPong New Unchecked Exception";
     public static final String GENERICPONGEXCP4 = "GenericPong New Exception Without String ctor";
 
+    // String message hard coded into various out typemaps
+    public static final String HARDCODED_TYPEMAP_NPE_MESSAGE = "null string";
 }
 
 // an exception not mentioned or wrapped by the swig interface,
@@ -51,6 +53,7 @@ class java_director_exception_feature_MyFooDirectorImpl extends Foo {
     public String ping(int excp) throws MyJavaException1, MyJavaException2 {
 	if (excp == 1) throw new MyJavaException1(java_director_exception_feature_Consts.PINGEXCP1);
 	if (excp == 2) throw new MyJavaException2(java_director_exception_feature_Consts.PINGEXCP2);
+	if (excp == 3) return null;  // Should be illegal?
 	return "Ping director returned";
     }
     @Override
@@ -59,6 +62,7 @@ class java_director_exception_feature_MyFooDirectorImpl extends Foo {
 	if (excp == 2) throw new MyJavaException2(java_director_exception_feature_Consts.PONGEXCP2);
 	if (excp == 3) throw new MyJavaUnexpected(java_director_exception_feature_Consts.PONGUNEXPECTED);
 	if (excp == 4) throw new java.lang.NullPointerException(java_director_exception_feature_Consts.TRANSLATED_NPE);  // should be translated to ::Unexpected
+	if (excp == 5) return null;  // Should be illegal?
 	return "Pong director returned";
     }
 
@@ -72,8 +76,33 @@ class java_director_exception_feature_MyFooDirectorImpl extends Foo {
             throw new NewUncheckedException(java_director_exception_feature_Consts.GENERICPONGEXCP3);
 	if (excp == 4)
             throw new UnconstructableException(1, java_director_exception_feature_Consts.GENERICPONGEXCP4);
+        if (excp == 5)
+            return null;
+        
         return "GenericPong director returned";
     }
+
+    @Override
+    public String wstring_pong(int excp) throws MyJavaException1, MyJavaException2, MyJavaUnexpected {
+	if (excp == 1) throw new MyJavaException1(java_director_exception_feature_Consts.PONGEXCP1);
+	if (excp == 2) throw new MyJavaException2(java_director_exception_feature_Consts.PONGEXCP2);
+	if (excp == 3) throw new MyJavaUnexpected(java_director_exception_feature_Consts.PONGUNEXPECTED);
+	if (excp == 4) throw new java.lang.NullPointerException(java_director_exception_feature_Consts.TRANSLATED_NPE);  // should be translated to ::Unexpected
+	if (excp == 5) return null;  // Should be illegal?
+	return "Pong director returned";
+    }
+
+    @Override
+    public ObjectReturn objectreturn_pong(int excp) throws MyJavaException1, MyJavaException2, MyJavaUnexpected {
+	if (excp == 1) throw new MyJavaException1(java_director_exception_feature_Consts.PONGEXCP1);
+	if (excp == 2) throw new MyJavaException2(java_director_exception_feature_Consts.PONGEXCP2);
+	if (excp == 3) throw new MyJavaUnexpected(java_director_exception_feature_Consts.PONGUNEXPECTED);
+	if (excp == 4) throw new java.lang.NullPointerException(java_director_exception_feature_Consts.TRANSLATED_NPE);  // should be translated to ::Unexpected
+	if (excp == 5) return null;  // Should be illegal?
+
+	return new ObjectReturn(1,2);
+    }
+
 }
 
 public class java_director_exception_feature_runme {
@@ -107,6 +136,8 @@ public class java_director_exception_feature_runme {
 	      { failif( ! "Threw some integer".equals(e.getMessage()), "Ping exception not translated through int: '" + e.getMessage() + "'"); }
 	  try {  b.ping(2); fail("No exception thrown in ping(2)"); } catch (MyJavaException2 e)
 	      { failif( ! java_director_exception_feature_Consts.PINGEXCP2.equals(e.getMessage()), "Expected exception has unexpected message: '" + e.getMessage() + "'"); }
+	  try {  b.ping(3); fail("No exception thrown in ping(3)"); } catch (MyJavaException2 e)
+	      { failif( ! "null string".equals(e.getMessage()), "Expected exception has unexpected message: '" + e.getMessage() + "'"); }
 
 	  try {  b.pong(0); } catch (Exception e)
 	      { fail("Exception should not have been thrown: " + e + " from pong(0)");  }
@@ -118,6 +149,34 @@ public class java_director_exception_feature_runme {
 	      { failif( ! java_director_exception_feature_Consts.PONGUNEXPECTED.equals(e.getMessage()),  "Expected exception has unexpected message: '" + e.getMessage() + "'"); }
 	  try {  b.pong(4); fail("No exception thrown in pong(4)"); } catch (MyJavaUnexpected e)
 	      { failif( ! java_director_exception_feature_Consts.TRANSLATED_NPE.equals(e.getMessage()),  "Expected exception has unexpected message: '" + e.getMessage() + "'"); }
+	  try {  b.pong(5); fail("No exception thrown in pong(5)"); } catch (MyJavaUnexpected e)
+	      { failif( ! "null string".equals(e.getMessage()),  "Expected exception has unexpected message: '" + e.getMessage() + "'"); }
+
+	  try {  b.wstring_pong(0); } catch (Exception e)
+	      { fail("Exception should not have been thrown: " + e + " from pong(0)");  }
+	  try {  b.wstring_pong(1); fail("No exception thrown in pong(1)"); } catch (MyJavaException1 e)
+	      { failif( ! java_director_exception_feature_Consts.PONGEXCP1.equals(e.getMessage()), "Expected exception has unexpected message: '" + e.getMessage() + "'"); }
+	  try {  b.wstring_pong(2); fail("No exception thrown in pong(2)");} catch (MyJavaException2 e)
+	      { failif( ! java_director_exception_feature_Consts.PONGEXCP2.equals(e.getMessage()),  "Expected exception has unexpected message: '" + e.getMessage() + "'"); }
+	  try {  b.wstring_pong(3); fail("No exception thrown in pong(3)");} catch (MyJavaUnexpected e)
+	      { failif( ! java_director_exception_feature_Consts.PONGUNEXPECTED.equals(e.getMessage()),  "Expected exception has unexpected message: '" + e.getMessage() + "'"); }
+	  try {  b.wstring_pong(4); fail("No exception thrown in pong(4)"); } catch (MyJavaUnexpected e)
+	      { failif( ! java_director_exception_feature_Consts.TRANSLATED_NPE.equals(e.getMessage()),  "Expected exception has unexpected message: '" + e.getMessage() + "'"); }
+	  try {  b.wstring_pong(5); fail("No exception thrown in pong(5)"); } catch (MyJavaUnexpected e)
+	      { failif( ! java_director_exception_feature_Consts.HARDCODED_TYPEMAP_NPE_MESSAGE.equals(e.getMessage()),  "Expected exception has unexpected message: '" + e.getMessage() + "'"); }
+
+	  try {  b.objectreturn_pong(0); } catch (Exception e)
+	      { fail("Exception should not have been thrown: " + e + " from pong(0)");  }
+	  try {  b.objectreturn_pong(1); fail("No exception thrown in pong(1)"); } catch (MyJavaException1 e)
+	      { failif( ! java_director_exception_feature_Consts.PONGEXCP1.equals(e.getMessage()), "Expected exception has unexpected message: '" + e.getMessage() + "'"); }
+	  try {  b.objectreturn_pong(2); fail("No exception thrown in pong(2)");} catch (MyJavaException2 e)
+	      { failif( ! java_director_exception_feature_Consts.PONGEXCP2.equals(e.getMessage()),  "Expected exception has unexpected message: '" + e.getMessage() + "'"); }
+	  try {  b.objectreturn_pong(3); fail("No exception thrown in pong(3)");} catch (MyJavaUnexpected e)
+	      { failif( ! java_director_exception_feature_Consts.PONGUNEXPECTED.equals(e.getMessage()),  "Expected exception has unexpected message: '" + e.getMessage() + "'"); }
+	  try {  b.objectreturn_pong(4); fail("No exception thrown in pong(4)"); } catch (MyJavaUnexpected e)
+	      { failif( ! java_director_exception_feature_Consts.TRANSLATED_NPE.equals(e.getMessage()),  "Expected exception has unexpected message: '" + e.getMessage() + "'"); }
+	  try {  b.objectreturn_pong(5); fail("No exception thrown in pong(5)"); } catch (MyJavaUnexpected e)
+	      { failif( ! java_director_exception_feature_Consts.HARDCODED_TYPEMAP_NPE_MESSAGE.equals(e.getMessage()),  "Expected exception has unexpected message: '" + e.getMessage() + "'"); }
 
 
 	  try {  b.genericpong(0); }
@@ -138,8 +197,13 @@ public class java_director_exception_feature_runme {
           }
 	  try {  b.genericpong(4); fail("No exception thrown in genericpong(4)");}
           catch (RuntimeException e) {
-              failif ( e.getClass() != RuntimeException.class, "Exception " + e + " is not exactly RumtimeException");
+              failif ( e.getClass() != RuntimeException.class, "Exception " + e + " is not exactly RuntimeException");
               failif( ! java_director_exception_feature_Consts.GENERICPONGEXCP4.equals(e.getMessage()),  "Expected exception has unexpected message: '" + e.getMessage() + "'");
+          }
+	  try {  b.genericpong(5); fail("No exception thrown in genericpong(5)");}
+          catch (RuntimeException e) {
+              failif ( e.getClass() != RuntimeException.class, "Exception " + e + " is not exactly RuntimeException");
+              failif( ! java_director_exception_feature_Consts.HARDCODED_TYPEMAP_NPE_MESSAGE.equals(e.getMessage()),  "Expected exception has unexpected message: '" + e.getMessage() + "'");
           }
 
       }

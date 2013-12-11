@@ -325,7 +325,8 @@ SWIGINTERN const char * SWIG_UnpackData(const char *c, void *ptr, size_t sz) {
   int i;
 
   if (!$input) {
-    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "BigInteger null");
+    if (!jenv->ExceptionCheck())
+      SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "BigInteger null");
     return $null;
   }
   clazz = JCALL1(GetObjectClass, jenv, $input);
@@ -567,7 +568,8 @@ SWIGINTERN const char * SWIG_UnpackData(const char *c, void *ptr, size_t sz) {
   int i;
 
   if (!$input) {
-    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "BigInteger null");
+    if (!jenv->ExceptionCheck())
+       SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "BigInteger null");
     return $null;
   }
   clazz = JCALL1(GetObjectClass, jenv, $input);
@@ -616,7 +618,8 @@ SWIGINTERN const char * SWIG_UnpackData(const char *c, void *ptr, size_t sz) {
 %typemap(directorout) SWIGTYPE ($&1_type argp)
 %{ argp = *($&1_ltype*)&$input; 
    if (!argp) {
-     SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "Unexpected null return for type $1_type");
+     if (!jenv->ExceptionCheck())
+       SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "Unexpected null return for type $1_type");
      return $null;
    }
    $result = *argp; %}
@@ -683,13 +686,15 @@ SWIGINTERN const char * SWIG_UnpackData(const char *c, void *ptr, size_t sz) {
 
 %typemap(directorout, warning=SWIGWARN_TYPEMAP_DIRECTOROUT_PTR_MSG) SWIGTYPE &
 %{ if (!$input) {
-     SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "Unexpected null return for type $1_type");
+     if (!jenv->ExceptionCheck())
+       SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "Unexpected null return for type $1_type");
      return $null;
    }
    $result = *($&1_ltype)&$input; %}
 %typemap(directorout, warning=SWIGWARN_TYPEMAP_DIRECTOROUT_PTR_MSG) SWIGTYPE &&
 %{ if (!$input) {
-     SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "Unexpected null return for type $1_type");
+     if (!jenv->ExceptionCheck())
+       SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "Unexpected null return for type $1_type");
      return $null;
    }
    $result = *($&1_ltype)&$input; %}
