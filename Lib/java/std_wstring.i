@@ -44,7 +44,8 @@ class wstring;
 
 %typemap(directorout) wstring
 %{if(!$input) {
-    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "null std::wstring");
+    if (!jenv->ExceptionCheck())
+      SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "null std::wstring");
     return $null;
   }
   const jchar *$1_pstr = jenv->GetStringChars($input, 0);
@@ -119,7 +120,8 @@ class wstring;
 
 %typemap(directorout,warning=SWIGWARN_TYPEMAP_THREAD_UNSAFE_MSG) const wstring & 
 %{if(!$input) {
-    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "null std::wstring");
+    if (!jenv->ExceptionCheck())
+      SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "null std::wstring");
     return $null;
   }
   const jchar *$1_pstr = jenv->GetStringChars($input, 0);
