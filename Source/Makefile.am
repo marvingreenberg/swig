@@ -8,6 +8,8 @@ BUILD_SOURCE_DIR=$(top_builddir)/Source
 
 SWIG_CXX_DEFS = @SWILL@
 
+FLAGS = -k -s
+
 AM_CPPFLAGS =	-I$(BUILD_SOURCE_DIR)/Include	\
 		-I$(BUILD_SOURCE_DIR)/CParse	\
 		-I$(SOURCE_DIR)/Include		\
@@ -118,6 +120,17 @@ distclean-local:
 
 SWIGTYPEDEFS=-T bool -T File -T DohObjInfo -T Parm -T Language -T List -T Typetab -T ModuleFactory -T ErrorMessageFormat -T Symtab -T Hash -T Scanner -T String -T DohBase -T Node -T String_or_char -T SwigType -T Dispatcher -T Wrapper -T DohStringMethods -T DohFileMethods -T DohListMethods -T DohHashMethods -T DOH -T DohIterator -T ParmList -T FILE -T HashNode -T DOHObj_or_char -T DOHFile -T DOHString -T DOHString_or_char -T UpcallData
 INDENTBAKSDIR=../IndentBaks
+
+# Add a target to run low level tests.  Only some string.c tests for now. 
+# If more tests are added, do this more generically
+.PHONY: check-test-suite check-DOH-test-suite
+check: check-test-suite
+check-test-suite: check-DOH-test-suite
+
+check-DOH-test-suite: $(filter DOH/%,$(eswig_OBJECTS))
+	$(COMPILE) -c DOH/testsuite.c -o DOH/testsuite.$(OBJEXT)
+	$(LINK) -o $(top_builddir)/DOH_testsuite$(EXEEXT) DOH/testsuite.$(OBJEXT) $?
+	$(top_builddir)/DOH_testsuite$(EXEEXT) $(FLAGS)
 
 beautify:
 	rm -rf $(INDENTBAKSDIR)

@@ -78,6 +78,7 @@
 #define DohGetfile         DOH_NAMESPACE(Getfile)
 #define DohSetfile         DOH_NAMESPACE(Setfile)
 #define DohReplace         DOH_NAMESPACE(Replace)
+#define DohReplaceConditional DOH_NAMESPACE(ReplaceConditional)
 #define DohChop            DOH_NAMESPACE(Chop)
 #define DohGetmeta         DOH_NAMESPACE(Getmeta)
 #define DohSetmeta         DOH_NAMESPACE(Setmeta)
@@ -242,8 +243,9 @@ extern void DohSetline(DOH *obj, int line);
 extern DOH *DohGetfile(const DOH *obj);
 extern void DohSetfile(DOH *obj, DOH *file);
 
-  /* String Methods */
+/* String Methods */
 
+extern int DohReplaceConditional(DOHString * src, const  DOHString_or_char *token, int true_flag);
 extern int DohReplace(DOHString * src, const DOHString_or_char *token, const DOHString_or_char *rep, int flags);
 extern void DohChop(DOHString * src);
 
@@ -404,6 +406,7 @@ extern void DohMemoryDebug(void);
 #define ClearFlag(o,n)     DohSetFlagAttr(o,n,"")
 #define Readline           DohReadline
 #define Replace            DohReplace
+#define ReplaceConditional DohReplaceConditional
 #define Chop               DohChop
 #define Getmeta            DohGetmeta
 #define Setmeta            DohSetmeta
