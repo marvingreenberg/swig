@@ -36,12 +36,13 @@ class string;
     $1.assign($1_pstr);
     jenv->ReleaseStringUTFChars($input, $1_pstr); %}
 
+/* If method has an exception specification, there is no general 
+   way to signal a detected error - must return an empty string */
 %typemap(directorout) string 
-%{ if(!$input) {
-     if (!jenv->ExceptionCheck())
-       SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "null string");
-     return $null;
-   } 
+%{ if (!$input) { $ifhasthrow(
+     return $null,
+     throw Swig::DirectorException("invalid null return from director method returning std::string"));
+  }
    const char *$1_pstr = (const char *)jenv->GetStringUTFChars($input, 0); 
    if (!$1_pstr) return $null;
    $result.assign($1_pstr);
@@ -84,10 +85,9 @@ class string;
    jenv->ReleaseStringUTFChars($input, $1_pstr); %}
 
 %typemap(directorout,warning=SWIGWARN_TYPEMAP_THREAD_UNSAFE_MSG) const string &
-%{ if(!$input) {
-     if (!jenv->ExceptionCheck())
-       SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "null string");
-     return $null;
+%{ if (!$input) { $ifhasthrow(
+     return $null,
+     throw Swig::DirectorException("invalid null return from director method returning std::string"));
    }
    const char *$1_pstr = (const char *)jenv->GetStringUTFChars($input, 0); 
    if (!$1_pstr) return $null;

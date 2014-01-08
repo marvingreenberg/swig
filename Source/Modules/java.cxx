@@ -3757,6 +3757,9 @@ public:
       Printf(w->code, "if (!swig_override[%d]) {\n", classmeth_off);
     }
 
+    /* Need to emit code depending on whether exception specification is present */
+    ParmList *throw_parm_list = Getattr(n, "throws");
+
     if (!pure_virtual) {
       String *super_call = Swig_method_call(super, l);
       if (is_void) {
@@ -3768,15 +3771,20 @@ public:
       }
       Delete(super_call);
     } else {
-      Printf(w->code, "SWIG_JavaThrowException(JNIEnvWrapper(this).getJNIEnv(), SWIG_JavaDirectorPureVirtual, ");
-      Printf(w->code, "\"Attempted to invoke pure virtual method %s::%s.\");\n", SwigType_namestr(c_classname), SwigType_namestr(name));
-
-      /* Make sure that we return something in the case of a pure
-       * virtual method call for syntactical reasons. */
-      if (!is_void)
-	Printf(w->code, "return %s;", qualified_return);
-      else if (!ignored_method)
-	Printf(w->code, "return;\n");
+      if (throw_parm_list) {
+	/* If have exception specification, cannot throw DirectorException.
+	   Then, signal error by setting pending java exception: better than nothing
+	   but not correct since calling C++ code sees no error. */
+	Printf(w->code, "SWIG_JavaThrowException(JNIEnvWrapper(this).getJNIEnv(), SWIG_JavaDirectorPureVirtual, ");
+	Printf(w->code, "\"Attempted to invoke pure virtual method %s::%s.\");\n", SwigType_namestr(c_classname), SwigType_namestr(name));
+	if (!is_void)
+	  Printf(w->code, "return %s;", qualified_return);
+	else if (!ignored_method)
+	  Printf(w->code, "return;\n");
+      } else {
+	Printf(w->code, "throw Swig::DirectorException(\"Attempted to invoke pure virtual method %s::%s.\");\n",
+	       SwigType_namestr(c_classname), SwigType_namestr(name));       
+      }
     }
 
     if (!ignored_method) {
@@ -3947,7 +3955,6 @@ public:
 
     // Add any exception specifications to the methods in the director class
     // Get any Java exception classes in the throws typemap
-    ParmList *throw_parm_list = NULL;
 
     // May need to add Java throws clause to director methods if %catches defined
     // Get any Java exception classes in the throws typemap
@@ -3960,7 +3967,7 @@ public:
       }
     }
 
-    if ((throw_parm_list = Getattr(n, "throws")) || Getattr(n, "throw")) {
+    if (throw_parm_list || Getattr(n, "throw")) {
       int gencomma = 0;
 
       Append(w->def, " throw(");
@@ -4048,6 +4055,7 @@ public:
 	/* Copy jresult into c_result... */
 	if ((tm = Swig_typemap_lookup("directorout", n, result_str, w))) {
 	  addThrows(n, "tmap:directorout", n);
+	  ReplaceConditional(tm, "$ifhasthrow", throw_parm_list != NULL);
 	  Replaceall(tm, "$input", jresult_str);
 	  Replaceall(tm, "$result", result_str);
 	  Printf(w->code, "%s\n", tm);
@@ -4074,22 +4082,27 @@ public:
 	  p = nextSibling(p);
 	}
       }
+      Printf(w->code, "jenv->DeleteLocalRef(swigjobj);\n");
 
       Delete(imclass_desc);
       Delete(class_desc);
 
-      /* Terminate wrapper code */
+      /* Terminate wrapper code to handle exceptional case*/
       Printf(w->code, "} else {\n");
-      Printf(w->code, "SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, \"null upcall object in %s::%s \");\n",
-	     SwigType_namestr(c_classname), SwigType_namestr(name));
+      /* If have exception specification, cannot throw DirectorException.
+	 Then, signal error by setting pending java exception: better than nothing
+	 but not correct since calling C++ code sees no error. */
+      if (throw_parm_list) {
+	Printf(w->code, "SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, \"null upcall object in %s::%s \");\n",
+	       SwigType_namestr(c_classname), SwigType_namestr(name));
+      } else {
+	Printf(w->code, "throw Swig::DirectorException(\"null upcall object in %s::%s \");\n",
+	       SwigType_namestr(c_classname), SwigType_namestr(name));
+      }
       Printf(w->code, "}\n");
-
-      Printf(w->code, "if (swigjobj) jenv->DeleteLocalRef(swigjobj);\n");
-
       if (!is_void)
 	Printf(w->code, "return %s;", qualified_return);
     }
-
     Printf(w->code, "}");
 
     // We expose virtual protected methods via an extra public inline method which makes a straight call to the wrapped class' method
