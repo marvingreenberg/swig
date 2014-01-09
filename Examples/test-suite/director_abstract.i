@@ -12,8 +12,14 @@ public:
 %}
 
 %include <std_string.i>
+%include <std_except.i>
+
+%include <generic_director_exceptions.i>
 
 %feature("director") Foo;
+
+SWIG_GENERIC_DIRECTOR_EXCEPTION_HANDLING(Foo::ping);
+SWIG_GENERIC_DIRECTOR_EXCEPTION_HANDLING(Foo::pong);
 
 class Foo {
 public:
@@ -21,7 +27,6 @@ public:
   virtual std::string ping() = 0;
   virtual std::string pong() { return "Foo::pong();" + ping(); }
 };
-
 
 
 %feature("director");

@@ -6048,8 +6048,54 @@ A typemap for C character strings is:
 </pre>
 </div>
 
+<p>In more complex situations, a directorout typemap may need to raise
+an exception.  For example, consider a C++ method returning
+a <code>std::string</code>.  In C++ the implementation must return a
+valid string.  It may be "" but it must be valid.  On the other hand,
+the director implementation written in Java could return <code>new
+String("")</code> or <code>new String("foo")</code> OR <b>null</b>.
+The null return cannot be mapped to any valid value
+for <code>std::string</code>.  Developers should ensure that their
+implementations do not return invalid results, but the swig wrapper
+must include code to handle these error conditions.</p>
+
+<p>In these cases, raising a Swig::DirectorException is the default
+behavior (with a caveat).  For example, The directorout typemap
+for <code>std::string</code> is:</p>
+
+<div class="code">
+<pre>
+%typemap(directorout) string 
+%{ if (!$input) { $ifhasthrow(
+    return $null,
+    throw Swig::DirectorException("invalid null return from director method returning std::string"));
+   }
+   const char *$1_pstr = (const char *)jenv->GetStringUTFChars($input, 0); 
+   if (!$1_pstr) return $null;
+   $result.assign($1_pstr);
+   jenv->ReleaseStringUTFChars($input, $1_pstr);
+%}
+</pre>
 </div>
 
+</div>
+
+<p>This typemap converts the returned java String into a std::string
+which is then returned out to a C++ caller.  But, if the returned java
+String was null, a Swig::DirectorException is raised.  In conjunction
+with a correctly defined <code>%except</code> feature, this interrupts
+any chain of C++ layer calls, back to the originating JVM layer call,
+with a reported java <code>RuntimeException</code>.  The caveat is
+that if the method being wrapped has an exception specification,
+the <code>Swig::DirectorException</code> cannot be thrown.
+The <code>$ifhasthrow</code> expression is a SWIG substitution that
+uses the first or second expression, depending whether the method has
+an exception specification (has a "throw(...)").  So the typemap above
+will throw a DirectorException UNLESS the method has an exception
+specification, in which case a "$null" return value is used.  The
+substition "$null" in SWIG returns a defined empty value for every
+swig type.  In the case of std::string, this is just an empty string
+("").
 
 <p><tt>%typemap(javadirectorin)</tt></p>
 <div class="indent">

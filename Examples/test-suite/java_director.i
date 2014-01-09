@@ -17,7 +17,6 @@
 %{
 #include <string>
 #include <vector>
-
 class Quux {
 public:
 	Quux() : memb_("default Quux ctor arg") {instances_++; }
@@ -65,8 +64,16 @@ private:
 
 %include "std_string.i"
 
+// Include macros that define simple generic director exception handling
+%include <generic_director_exceptions.i>
+
 %feature("director") Quux;
+
+/* use generic exception handling for everything */
+SWIG_GENERIC_DIRECTOR_EXCEPTION_HANDLING(\ )
+
 SWIG_DIRECTOR_OWNED(Quux)
+
 
 class Quux {
 public:

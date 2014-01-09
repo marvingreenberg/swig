@@ -811,6 +811,23 @@ int DohReplace(DOH *src, const DOH *token, const DOH *rep, int flags) {
 }
 
 /* -----------------------------------------------------------------------------
+ * DohReplaceConditional()
+ * ----------------------------------------------------------------------------- */
+
+int DohReplaceConditional(DOH *src, const DOH *string_or_char_token, int true_flag) {
+  DohBase *b = (DohBase *) src;
+  DohObjInfo *objinfo;
+  const char * conditionaltoken = Char(string_or_char_token);
+  if (DohIsString(src)) {
+    objinfo = b->type;
+    if (objinfo->doh_string->doh_replace_conditional) {
+      return (objinfo->doh_string->doh_replace_conditional) (b, conditionaltoken, true_flag);
+    }
+  }
+  return 0;
+}
+
+/* -----------------------------------------------------------------------------
  * DohChop()
  * ----------------------------------------------------------------------------- */
 

@@ -43,9 +43,9 @@ class wstring;
  %}
 
 %typemap(directorout) wstring
-%{if(!$input) {
-    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "null std::wstring");
-    return $null;
+%{if (!$input) { $ifhasthrow(
+    return $null,
+    throw Swig::DirectorException("invalid null return from director method returning std::wstring"));
   }
   const jchar *$1_pstr = jenv->GetStringChars($input, 0);
   if (!$1_pstr) return $null;
@@ -118,9 +118,9 @@ class wstring;
  %}
 
 %typemap(directorout,warning=SWIGWARN_TYPEMAP_THREAD_UNSAFE_MSG) const wstring & 
-%{if(!$input) {
-    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "null std::wstring");
-    return $null;
+%{if (!$input) { $ifhasthrow(
+    return $null,
+    throw Swig::DirectorException("invalid null return from director method returning std::wstring"));
   }
   const jchar *$1_pstr = jenv->GetStringChars($input, 0);
   if (!$1_pstr) return $null;

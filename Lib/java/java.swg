@@ -324,9 +324,9 @@ SWIGINTERN const char * SWIG_UnpackData(const char *c, void *ptr, size_t sz) {
   jsize sz;
   int i;
 
-  if (!$input) {
-    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "BigInteger null");
-    return $null;
+  if (!$input) { $ifhasthrow(
+    return $null,
+    throw Swig::DirectorException("invalid null return from director method returning BigInteger"));
   }
   clazz = JCALL1(GetObjectClass, jenv, $input);
   mid = JCALL3(GetMethodID, jenv, clazz, "toByteArray", "()[B");
@@ -566,10 +566,10 @@ SWIGINTERN const char * SWIG_UnpackData(const char *c, void *ptr, size_t sz) {
   jsize sz;
   int i;
 
-  if (!$input) {
-    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "BigInteger null");
-    return $null;
-  }
+  if (!$input) { $ifhasthrow(
+    return $null,
+    throw Swig::DirectorException("invalid null return from director method returning BigInteger"));
+  } 
   clazz = JCALL1(GetObjectClass, jenv, $input);
   mid = JCALL3(GetMethodID, jenv, clazz, "toByteArray", "()[B");
   ba = (jbyteArray)JCALL2(CallObjectMethod, jenv, $input, mid);
@@ -615,9 +615,9 @@ SWIGINTERN const char * SWIG_UnpackData(const char *c, void *ptr, size_t sz) {
 
 %typemap(directorout) SWIGTYPE ($&1_type argp)
 %{ argp = *($&1_ltype*)&$input; 
-   if (!argp) {
-     SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "Unexpected null return for type $1_type");
-     return $null;
+   if (!argp) { $ifhasthrow(
+    return $null,
+    throw Swig::DirectorException("invalid null return from director method returning $1_type"));
    }
    $result = *argp; %}
 
@@ -682,15 +682,15 @@ SWIGINTERN const char * SWIG_UnpackData(const char *c, void *ptr, size_t sz) {
 %{ *(($&1_ltype)&$input) = ($1_ltype) $1; %}
 
 %typemap(directorout, warning=SWIGWARN_TYPEMAP_DIRECTOROUT_PTR_MSG) SWIGTYPE &
-%{ if (!$input) {
-     SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "Unexpected null return for type $1_type");
-     return $null;
+%{ if (!$input) { $ifhasthrow(
+    return $null,
+    throw Swig::DirectorException("invalid null return from director method  for type $1_type"));
    }
    $result = *($&1_ltype)&$input; %}
 %typemap(directorout, warning=SWIGWARN_TYPEMAP_DIRECTOROUT_PTR_MSG) SWIGTYPE &&
-%{ if (!$input) {
-     SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "Unexpected null return for type $1_type");
-     return $null;
+%{ if (!$input)  { $ifhasthrow(
+    return $null,           
+    throw Swig::DirectorException("invalid null return from director method  for type $1_type"));
    }
    $result = *($&1_ltype)&$input; %}
 %typemap(directorin,descriptor="L$packagepath/$javaclassname;") SWIGTYPE &

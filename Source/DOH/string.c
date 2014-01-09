@@ -664,6 +664,141 @@ static char *match_number_end(char *base, char *s, char *token, int tokenlen) {
   return 0;
 }
 
+/* Internal, used by String_replace_conditional */
+static char * find_expr_end(int firstpart, char * cend, char **exprbegin, char **exprend, int *escapedcommas) {
+  int escaping = 0;
+  char openquote = 0;
+  int parennestlevel = 0;
+  char *c = *exprbegin;
+  char *expr1begin = *exprbegin;
+  char *expr1end = 0;
+  char *expr2begin = 0;
+  char *expr2end = 0;
+
+  *escapedcommas = 0; /* false */
+  *exprend = 0;
+  while (c != 0 && c < cend && !expr2end) {
+    if (openquote) {
+      if (*c == openquote && ! escaping)
+	openquote = 0;
+    } else if (parennestlevel > 0) {
+      if (*c == ')') --parennestlevel;
+      else if (*c == '(') ++parennestlevel;
+    } else if (*c == '(') {
+      ++parennestlevel;
+    } else if (*c == ')') { /* at end of "macro", not a nested ( ) */
+      if (!expr1end) expr1end = c;
+      if (!expr2begin) expr2begin = c;
+      expr2end = c;
+    } else if (*c == ',') {
+      if (escaping) {
+	/* only flag escapedcommas for the part being sought. */
+	if ((firstpart == 0) != (expr2begin == 0))
+	  *escapedcommas = 1;
+      } else if (!expr1end) {  /* ',' indicated end of expr1 */
+	expr1end = c;
+	expr2begin = c+1;
+      }
+    } 
+    escaping = (*c == '\\') && !escaping;  /* TODO Decide about escaping rules. */
+    ++c;
+  }
+  *exprbegin = (!!firstpart) ? expr1begin : expr2begin;
+  *exprend = (!!firstpart) ? expr1end : expr2end;
+
+  return expr2end ? c : 0;   /* return position to resume parse, or 0 if error */
+}
+
+void move(char ** insertpos, char*start, char* end) {
+  memmove(*insertpos, start, end-start);
+  *insertpos += end-start;
+  **insertpos = '\0';  /* keep it null terminated */
+}
+	
+/** 
+ *
+ * String_replace_conditional()
+ *
+ * Replaces multiple occurrences of strings like:
+ *   $ifcond(expression str 1,expression str 2)
+ * with one or the other expression, depending on flag.
+ *
+ * String * target: String object whose text is updated IN PLACE
+ * char const* conditionaltoken: the string marking the replacement expression
+ * int use_first: if true (not 0) use first expr, else use second (if present)
+ * 
+ * Returns -1 if syntax error - missing opening or closing '(',')'
+ *
+ * For example, 
+ * String * code = 
+ *   NewString("// Error \n$ifcond(return $null,throw Except("Oops");");
+ * replace_conditional(code, "$ifcond", true);
+ *
+ * results in code -> "// Error \nreturn $null;"
+ *
+ * Whitespace is preserved and the conditional "macro" may span multiple lines
+ *  since closing parenthesis is matched.
+ * 
+ *  v-- target (fixed)       v-- expr  v-- exprend
+ * "Some string with $ifcond(replstring) and $ifcond(true string,false string) Etc."
+ *                   ^-- src            ^-- nextsrc
+ *                   ^-- insertpos (incremented as moves occur)
+ * ---------------------------------------------------------------------------- */
+static int String_replace_conditional(DOH * dohtarget, const char * conditionaltoken, int use_first) {
+  int escapedcommas;            /* flag, nonzero if commas were escaped */
+  char *expr, *exprend;
+  char *p, *s, *e;
+  int tokenlen;
+  char *target, *src, *nextsrc, *srcend, *insertpos;
+
+  /* basic error checking */
+  if (! dohtarget) return -1;
+  target = ((String *)ObjData(dohtarget))->str;
+  if (!target) return -1;
+  if (! conditionaltoken) return -1;
+  tokenlen = strlen(conditionaltoken);
+  if (tokenlen <= 0) return -1;
+
+  src = target;
+  nextsrc = 0;
+  srcend = src + strlen(target);
+  insertpos = 0;
+
+  while ((p = strstr(src, conditionaltoken))) {
+    if (!insertpos) 
+      insertpos = p;
+    if (nextsrc) 
+      move(&insertpos, nextsrc, p);
+    expr = p + tokenlen;
+    while (isspace((int) *expr))   /* allow whitespace after token: $ifhasthrow  ( ... ). */
+      ++expr;
+
+    if ('(' != *expr) 
+      return -1;  /* Parse error: "Missing opening '(' */
+    ++expr;                 /* Past opening '('... */
+    nextsrc = find_expr_end(use_first, srcend, &expr, &exprend, &escapedcommas);
+    if (!nextsrc) 
+      return -1; /* Parse error : Missing closing ')'  */
+
+    if (escapedcommas) {  /* When have '\,' need to copy as series of fragments */
+      s = e = expr;
+      while (s<exprend) {
+	while (*e != '\\' && e < exprend) ++e;
+	/* move fragment, include '\' if no following ',' */
+	move(&insertpos, s, (e<exprend && *(e+1) != ',') ? e+1 : e);
+	s = e = e + 1;
+      }
+    } else {
+      move(&insertpos, expr, exprend);  /*  No escaped commas, move whole expr */
+    }
+    src = nextsrc;
+  }
+  if (insertpos!=0 && nextsrc!=0)
+    move(&insertpos, nextsrc, srcend);
+
+  return 0;
+}
+
 /* -----------------------------------------------------------------------------
  * replace_simple()
  *
@@ -895,6 +1030,7 @@ static int replace_simple(String *str, char *token, char *rep, int flags, int co
   }
 }
 
+
 /* -----------------------------------------------------------------------------
  * String_replace()
  * ----------------------------------------------------------------------------- */
@@ -991,6 +1127,7 @@ static DohFileMethods StringFileMethods = {
 };
 
 static DohStringMethods StringStringMethods = {
+  String_replace_conditional,
   String_replace,
   String_chop,
 };
