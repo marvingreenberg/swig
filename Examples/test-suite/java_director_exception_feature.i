@@ -15,6 +15,9 @@
 %include <std_wstring.i>
 %include <std_string.i>
 
+// Include macros that define simple generic director exception handling
+%include <generic_director_exceptions.i>
+
 // DEFINE exceptions in header section using std::runtime_error
 %{
   #include <exception>
@@ -69,9 +72,7 @@
   }
 %}
 
-// Override the director:except feature so default exception is MyNS::Unexpected 
-// instead of default DirectorException
-%define UNEXPECTED_DEFAULT(METHOD) 
+%define UNEXPECTED_EXCEPTION_FALLBACK_FROM_TARGET(METHOD) 
 %feature("director:except") METHOD %{
   jthrowable $error = jenv->ExceptionOccurred();
   if ($error) {
@@ -81,9 +82,18 @@
   }
 %}
 %enddef
-UNEXPECTED_DEFAULT(MyNS::Foo::pong)
-UNEXPECTED_DEFAULT(MyNS::Foo::wstring_pong)
-UNEXPECTED_DEFAULT(MyNS::Foo::objectreturn_pong)
+
+// Override the director:except feature so default exception is MyNS::Unexpected 
+// instead of default DirectorException.  But, DirectorException can still be raised
+// by badly implemented director implementation (returning invalid null), so add 
+// exception feature to handle that.
+UNEXPECTED_EXCEPTION_FALLBACK_FROM_TARGET(MyNS::Foo::pong)
+UNEXPECTED_EXCEPTION_FALLBACK_FROM_TARGET(MyNS::Foo::wstring_pong)
+UNEXPECTED_EXCEPTION_FALLBACK_FROM_TARGET(MyNS::Foo::objectreturn_pong)
+
+SWIG_GENERIC_DIRECTOR_EXCEPTION_TO_TARGET_HANDLING(MyNS::Bar::pong)
+SWIG_GENERIC_DIRECTOR_EXCEPTION_TO_TARGET_HANDLING(MyNS::Bar::wstring_pong)
+SWIG_GENERIC_DIRECTOR_EXCEPTION_TO_TARGET_HANDLING(MyNS::Bar::objectreturn_pong)
 
 // TODO 'throws' typemap emitted by emit_action (emit.cxx) has no way
 // to get access to language specific special variables like
@@ -92,6 +102,14 @@ UNEXPECTED_DEFAULT(MyNS::Foo::objectreturn_pong)
 // throws typemaps for c++->java exception conversions
 %typemap(throws,throws="MyJavaException1") MyNS::Exception1 %{
   jclass excpcls = jenv->FindClass("java_director_exception_feature/MyJavaException1");
+  if (excpcls) {
+    jenv->ThrowNew(excpcls, $1.what());
+   }
+  return $null;
+%}
+
+%typemap(throws) Swig::DirectorException %{
+  $1.
   if (excpcls) {
     jenv->ThrowNew(excpcls, $1.what());
    }
@@ -124,27 +142,13 @@ UNEXPECTED_DEFAULT(MyNS::Foo::objectreturn_pong)
 
 // Use generic exception translation approach like python, ruby
 
-%feature("director:except") MyNS::Foo::genericpong {
-  jthrowable $error = jenv->ExceptionOccurred();
-  if ($error) {
-    jenv->ExceptionClear();
-    throw Swig::DirectorException(jenv,$error);
-  }
-}
+SWIG_GENERIC_DIRECTOR_EXCEPTION_FROM_TARGET_HANDLING(MyNS::Foo::genericpong)
 
 // %exception with throws attribute.  Need throws attribute for checked exceptions
 %feature ("except",throws="Exception")  MyNS::Foo::genericpong %{
 %}
 
-%feature ("except",throws="Exception")  MyNS::Bar::genericpong %{
-  try { $action }
-  catch (Swig::DirectorException & direxcp) {
-    direxcp.raiseJavaException(jenv);  // jenv always available in JNI code
-    return $null;
-  }
-%}
-
-
+SWIG_GENERIC_DIRECTOR_EXCEPTION_TO_TARGET_HANDLING_WITH_THROWS(MyNS::Bar::genericpong,Exception)
 
 %feature("director") Foo;
 

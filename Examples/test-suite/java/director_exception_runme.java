@@ -19,9 +19,14 @@ public class director_exception_runme {
 
       try {
           a.pong();
-          throw new RuntimeException ( "Failed to catch exception" );
       }
       catch (UnsupportedOperationException e) {
+          // This never happens.  Because pong has exception specification,
+          // no way to transmit an undefined unexpected exception like
+          // UnsupportedOperationException through the C++ layer.
+          // This could be done with generic DirectorException wrapping
+          // if no exception specification were present.  See more 
+          // comprehensive java_director_exception_feature test
       }
   }
 }
