@@ -45,11 +45,7 @@ namespace Swig {
   };
 
   /* Base class for director exceptions */
-  class DirectorException : std::exception {
-  protected:
-    std::string exceptiontypename;
-    std::string message;
-
+  class DirectorException : public std::exception {
   public:
     DirectorException(const char* exceptiontypename, const char* msg) : exceptiontypename(exceptiontypename), message(msg) {
     }
@@ -64,6 +60,11 @@ namespace Swig {
     }
     virtual ~DirectorException() throw() {
     }
+
+  protected:
+    std::string exceptiontypename;
+    std::string message;
+
   };
 
   /* Pure virtual method exception */
