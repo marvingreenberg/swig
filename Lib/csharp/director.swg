@@ -52,7 +52,7 @@ namespace Swig {
     DirectorException(std::string const& exceptiontypename, std::string const& msg) : exceptiontypename(exceptiontypename), message(msg) {
     }
     // Translate a C++ DirectorException back to the target language exception that was the cause
-    void raiseLanguageException() {
+    void raiseLanguageException() const {
       SWIG_csharp_exception_dynamic(exceptiontypename.c_str(),message.c_str());
     }
     const char * what() const throw() {
