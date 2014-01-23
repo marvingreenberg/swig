@@ -64,7 +64,6 @@ namespace Swig {
   protected:
     std::string exceptiontypename;
     std::string message;
-
   };
 
   /* Pure virtual method exception */
@@ -75,13 +74,12 @@ namespace Swig {
   };
 }
 
-inline void SwigDirector_throwIfSignaledException() {
+static inline SWIGUNUSED void SwigDirector_throwIfSignaledException() {
   if (Swig_pendingException)
     (*Swig_throwfn)(Swig_pendingException);
 }
 
-void SwigDirector_throw_Swig_DirectorException(void *& exception) {
-  // TODO std::cerr << "SwigDirector_throw_Swig_DirectorException " << exception << std::endl;	
+static void SWIGUNUSED SwigDirector_throw_Swig_DirectorException(void *& exception) {
   // Delete heap allocated pending exception, clear it, and throw a copy
   if (exception) {
     Swig::DirectorException copy(*reinterpret_cast<Swig::DirectorException*>(exception));
@@ -92,10 +90,11 @@ void SwigDirector_throw_Swig_DirectorException(void *& exception) {
 }
 
 // Called in intermediate class, corresponds to declaration in csharp.swg
+#ifdef __cplusplus
 extern "C" 
-void SwigDirector_signal_SWIGTYPE_Swig__DirectorException(const char * exceptiontypename, const char * msg) {
-  // TODO std::cerr << "SwigDirector_signal_Swig__DirectorException " << exceptiontypename << " " << msg << std::endl;
-  // TODO see comment in csharp.swg, same issue
+#endif
+SWIGEXPORT void SWIGSTDCALL SwigDirector_signal_SWIGTYPE_Swig__DirectorException(const char * exceptiontypename, const char * msg) {
+  // TODO see comment in csharp.swg, macro SWIG_DIRECTOR_DECLARE_EXCEPTION_HELPER_INTERNAL
   if (Swig_pendingException == 0) { 
     Swig_pendingException = reinterpret_cast<void *>(new Swig::DirectorException(exceptiontypename,msg));
     Swig_throwfn = &SwigDirector_throw_Swig_DirectorException;

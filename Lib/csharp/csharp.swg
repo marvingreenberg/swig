@@ -1075,7 +1075,7 @@ SWIG_CSBODY_TYPEWRAPPER(internal, protected, internal, SWIGTYPE)
 SWIG_DIRECTOR_DECLARE_EXCEPTION_HELPER_INTERNAL(FUNCTIONNAME,string message)
 %{
 
-void SwigDirector_throw_$descriptor(QUALIFIEDCLASS) (void *& exception) {
+static void SWIGUNUSED SwigDirector_throw_$descriptor(QUALIFIEDCLASS) (void *& exception) {
   if (exception) {
     QUALIFIEDCLASS copy(*(QUALIFIEDCLASS*)exception);
     delete (QUALIFIEDCLASS*)exception;
@@ -1084,8 +1084,10 @@ void SwigDirector_throw_$descriptor(QUALIFIEDCLASS) (void *& exception) {
   }
 }
 
+#ifdef __cplusplus
 extern "C"
-void FUNCTIONNAME(const char * msg) {
+#endif
+SWIGEXPORT void SWIGSTDCALL FUNCTIONNAME(const char * msg) {
   // TODO: what behavior if unexpectedly signal exception when already pending.  assert? Overwrite instead?
   if (Swig_pendingException == 0) {
     Swig_pendingException = (void*)new QUALIFIEDCLASS(msg);
