@@ -249,7 +249,7 @@ SWIGEXPORT void SWIGSTDCALL SWIGRegisterExceptionDynamicCallback_$module(
         type = global::System.Type.GetType(typename, true); // true: throw if not found
 	exceptionDynamic = global::System.Activator.CreateInstance(type, message) as global::System.Exception;
         SWIGPendingException.Set(exceptionDynamic);
-      } catch (global::System.Exception e) {      // TODO remove 'e' after removing debug line 
+      } catch (global::System.Exception) {
         // any problem creating a dynamic exception, just create an ApplicationException
         SetPendingApplicationException("<InvalidException:" + typename + ">: " + message);
       }
