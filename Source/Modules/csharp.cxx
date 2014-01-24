@@ -412,6 +412,7 @@ public:
     if (directorsEnabled()) {
       // Insert director runtime into the f_runtime file (make it occur before %header section)
       Swig_insert_file("director.swg", f_runtime);
+      Replaceall(f_runtime, "$module", module_class_name);
     }
     // Generate the intermediary class
     {
@@ -4009,7 +4010,8 @@ public:
       Printf(directorexcept, "     $action;\n");
       Printf(directorexcept, "  }$directorthrowshandlers\n");
       Printf(directorexcept, "  catch (global::System.Exception e) {\n");
-      Printf(directorexcept, "    $imclassname.SwigDirector_signal_$descriptor(Swig::DirectorException)(e.GetType().FullName, e.Message);\n");
+      // Name here matches definition in csharphead macro SWIG_DIRECTOR_SIGNAL_FUNCTION
+      Printf(directorexcept, "    $imclassname.SwigDirector_signal_$descriptor(Swig::DirectorException)_$module(e.GetType().FullName, e.Message);\n");
       Printf(directorexcept, "      return $null;\n");
       Printf(directorexcept, "  }\n");
     } else {

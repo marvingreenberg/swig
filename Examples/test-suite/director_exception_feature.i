@@ -156,9 +156,10 @@
 // ------------------------------------------------------------------------
 #ifdef SWIGCSHARP
 
-SWIG_DIRECTOR_DEFINE_EXCEPTION_HELPER(MyNS::Exception1)
-SWIG_DIRECTOR_DEFINE_EXCEPTION_HELPER(MyNS::Exception2)
-SWIG_DIRECTOR_DEFINE_EXCEPTION_HELPER(MyNS::Unexpected)
+// Macro works for any exception that is constructed from a string message
+SWIG_DIRECTOR_DEFINE_EXCEPTION_HELPER(SwigDirector_signal_$descriptor(MyNS::Exception1)_$module, MyNS::Exception1)
+SWIG_DIRECTOR_DEFINE_EXCEPTION_HELPER(SwigDirector_signal_$descriptor(MyNS::Exception2)_$module, MyNS::Exception2)
+SWIG_DIRECTOR_DEFINE_EXCEPTION_HELPER(SwigDirector_signal_$descriptor(MyNS::Unexpected)_$module, MyNS::Unexpected)
 
 // Note: director exception handling in C# is applied in C# proxy code, not C++
 //  wrapper code.
@@ -170,19 +171,19 @@ SWIG_DIRECTOR_DEFINE_EXCEPTION_HELPER(MyNS::Unexpected)
   }
   catch (MyLanguageException1) {
     global::System.Console.WriteLine(  "Foo::ping director:except translation of MyLanguageException1 into int exception");
-    $imclassname.SwigDirector_signal_$descriptor(int)(1);
+    $imclassname.SwigDirector_signal_AnIntAsAnException_$module(1);
     return $null;
   } 
   catch (MyLanguageException2 mle2) {
     global::System.Console.WriteLine(  "Foo::ping director:except translation of MyLanguageException2 into MyNS::Exception2");
-    $imclassname.SwigDirector_signal_$descriptor(MyNS::Exception2)(mle2.Message);
+    $imclassname.SwigDirector_signal_$descriptor(MyNS::Exception2)_$module(mle2.Message);
     return $null;
   } 
   // Important to handle all, have fallback
   catch (global::System.Exception e) {
     global::System.Console.WriteLine(  "Foo::ping director:except fallback translation of " + e.GetType().FullName + " into Swig::DirectorException with message '" + e.Message + "'");
-
-    $imclassname.SwigDirector_signal_$descriptor(Swig::DirectorException)(e.GetType().FullName, e.Message);
+    // Standard DirectorException signal function is defined by automatically
+    $imclassname.SwigDirector_signal_$descriptor(Swig::DirectorException)_$module(e.GetType().FullName, e.Message);
     return $null;
   }
   // TODO maybe have a catch { fallback for async exceptions } 
@@ -195,8 +196,7 @@ SWIG_DIRECTOR_DEFINE_EXCEPTION_HELPER(MyNS::Unexpected)
 %typemap(directorthrows) MyNS::Exception1,MyNS::Exception2,MyNS::Unexpected  %{
   catch ($csclassname e) {
     global::System.Console.WriteLine( "directorthrows typemap translation of $1_type into $namespace.$csclassname" );    
-    // $imclassname.SwigDirector_signal_$descriptor($1_type)
-    $imclassname.SwigDirector_signal_$1_descriptor(e.Message);
+    $imclassname.SwigDirector_signal_$1_descriptor_$module(e.Message);
     return $null;
   }
 %}
@@ -210,7 +210,7 @@ SWIG_DIRECTOR_DEFINE_EXCEPTION_HELPER(MyNS::Unexpected)
   $directorthrowshandlers
   // Use Unexpected as default so exception specification is not violated
   catch (global::System.Exception e) {
-    $imclassname.SwigDirector_signal_$descriptor(MyNS::Unexpected)(e.Message);
+    $imclassname.SwigDirector_signal_$descriptor(MyNS::Unexpected)_$module(e.Message);
     return $null;
   }
 %}
@@ -253,7 +253,7 @@ SWIG_DIRECTOR_DEFINE_EXCEPTION_HELPER(MyNS::Unexpected)
   catch (global::System.Exception e) {
     global::System.Console.WriteLine(  "genericpong director:except fallback of Typemap translation of " + e.GetType() + " into DirectorException");
 
-    $imclassname.SwigDirector_signal_$descriptor(Swig::DirectorException)(e.GetType().FullName, e.Message);
+    $imclassname.SwigDirector_signal_$descriptor(Swig::DirectorException)_$module(e.GetType().FullName, e.Message);
     return $null;
   }
   // TODO need catch { } block for async exceptions, when /EHsc?
@@ -285,9 +285,9 @@ SWIG_DIRECTOR_DEFINE_EXCEPTION_HELPER(MyNS::Unexpected)
 %csmethodmodifiers what() "internal"
 
 // Use '{' so macro defined in csharp.swg is interpreted 
-// Throwing an int exception is complicated.
+// Throwing an int as an exception is unusual, need to define own function to do that
 // Declare a helper with the implementation in the wrapper cxx
-SWIG_DIRECTOR_DECLARE_EXCEPTION_HELPER(int,int value)
+SWIG_DIRECTOR_DECLARE_EXCEPTION_HELPER(SwigDirector_signal_AnIntAsAnException_$module,int value)
 
 %{
 // Support existing test, ability to throw ints.
@@ -297,7 +297,7 @@ class Swig_IntException {
   int value;
 };
 
-void SwigDirector_throw_Swig_intTypeException(void *& exception) {
+static void SwigDirector_throw_Swig_intTypeException(void *& exception) {
   std::cerr << "SwigDirector_throw_Swig_intTypeException " << exception << std::endl;
   if (exception) {
     // Just holding an int, to throw an 'int' exception for a test
@@ -308,9 +308,11 @@ void SwigDirector_throw_Swig_intTypeException(void *& exception) {
   }
 }
 
+#ifdef __cplusplus
 extern "C" 
-void SwigDirector_signal_SWIGTYPE_int(int value) {
-  std::cerr << "SwigDirector_signal_SWIGTYPE_int " << value << std::endl;
+#endif
+SWIGEXPORT void SWIGSTDCALL SwigDirector_signal_AnIntAsAnException_$module(int value) {
+  std::cerr << "SwigDirector_signal_AnIntAsAnException_$module " << value << std::endl;
   if (Swig_pendingException == 0) {
     Swig_pendingException = reinterpret_cast<void *>(new Swig_IntException(value));
     Swig_throwfn = &SwigDirector_throw_Swig_intTypeException;

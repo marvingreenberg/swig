@@ -93,7 +93,7 @@ static void SWIGUNUSED SwigDirector_throw_Swig_DirectorException(void *& excepti
 #ifdef __cplusplus
 extern "C" 
 #endif
-SWIGEXPORT void SWIGSTDCALL SwigDirector_signal_SWIGTYPE_Swig__DirectorException(const char * exceptiontypename, const char * msg) {
+SWIGEXPORT void SWIGSTDCALL SwigDirector_signal_SWIGTYPE_Swig__DirectorException_$module(const char * exceptiontypename, const char * msg) {
   // TODO see comment in csharp.swg, macro SWIG_DIRECTOR_DECLARE_EXCEPTION_HELPER_INTERNAL
   if (Swig_pendingException == 0) { 
     Swig_pendingException = reinterpret_cast<void *>(new Swig::DirectorException(exceptiontypename,msg));

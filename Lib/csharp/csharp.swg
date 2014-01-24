@@ -1052,27 +1052,18 @@ SWIG_CSBODY_TYPEWRAPPER(internal, protected, internal, SWIGTYPE)
     } %}
 */
 
-// Add a macro to define boiler plate exception translation code for directors
-// Signals a pending exception in the wrapper layer
+// Add macros to define boiler plate exception translation code for directors
+// to signal a pending exception in the wrapper layer
 
-#define SWIG_DIRECTOR_SIGNAL_EXCEPTION_FUNCTION_NAME(QUALIFIEDCLASS) \
-  $imclassname.SwigDirector_signal_$descriptor(QUALIFIEDCLASS)
-
-#define SWIG_DIRECTOR_DEFINE_EXCEPTION_HELPER(QUALIFIEDCLASS) \
-  SWIG_DIRECTOR_DEFINE_EXCEPTION_HELPER_INTERNAL(QUALIFIEDCLASS, SwigDirector_signal_ ## $descriptor(QUALIFIEDCLASS))
-
-#define SWIG_DIRECTOR_DECLARE_EXCEPTION_HELPER(QUALIFIEDCLASS,SIGNATURE...) \
-  SWIG_DIRECTOR_DECLARE_EXCEPTION_HELPER_INTERNAL(SwigDirector_signal_ ## $descriptor(QUALIFIEDCLASS), SIGNATURE)
-
-%define SWIG_DIRECTOR_DECLARE_EXCEPTION_HELPER_INTERNAL(FUNCTIONNAME,SIGNATURE...)
+%define SWIG_DIRECTOR_DECLARE_EXCEPTION_HELPER(FUNCTIONNAME,SIGNATURE...)
 %pragma(csharp) imclasscode = %{
   [global::System.Runtime.InteropServices.DllImport("$dllimport", EntryPoint= # FUNCTIONNAME)]
   public static extern bool FUNCTIONNAME(SIGNATURE);
 %}
 %enddef
 
-%define SWIG_DIRECTOR_DEFINE_EXCEPTION_HELPER_INTERNAL(QUALIFIEDCLASS, FUNCTIONNAME)
-SWIG_DIRECTOR_DECLARE_EXCEPTION_HELPER_INTERNAL(FUNCTIONNAME,string message)
+%define SWIG_DIRECTOR_DEFINE_EXCEPTION_HELPER(FUNCTIONNAME, QUALIFIEDCLASS)
+SWIG_DIRECTOR_DECLARE_EXCEPTION_HELPER(FUNCTIONNAME,string message)
 %{
 
 static void SWIGUNUSED SwigDirector_throw_$descriptor(QUALIFIEDCLASS) (void *& exception) {
@@ -1088,7 +1079,8 @@ static void SWIGUNUSED SwigDirector_throw_$descriptor(QUALIFIEDCLASS) (void *& e
 extern "C"
 #endif
 SWIGEXPORT void SWIGSTDCALL FUNCTIONNAME(const char * msg) {
-  // TODO: what behavior if unexpectedly signal exception when already pending.  assert? Overwrite instead?
+// TODO: what behavior if unexpectedly signal exception when already pending.  
+// This just ignores.  Overwrite instead?  Message to stderr?  Assert?
   if (Swig_pendingException == 0) {
     Swig_pendingException = (void*)new QUALIFIEDCLASS(msg);
     Swig_throwfn = &SwigDirector_throw_$descriptor(QUALIFIEDCLASS) ;
@@ -1099,8 +1091,7 @@ SWIGEXPORT void SWIGSTDCALL FUNCTIONNAME(const char * msg) {
 %enddef
 
 // Declare the generic default director exception function defined in director.swg
-// TODO this probably needs %pragma(csharp,if="module:directors") 
+// This is defined in director.swg.  The naming also matches code in csharp.cxx
+// TODO this probably needs %pragma(csharp,if="module:directors") (a proposed new feature)
 //   or this needs to be in director.swg (which is not possible now)
-// TODO this is broken if directors are not enabled right now.
-// Can just copy the appropriate definition there
-SWIG_DIRECTOR_DECLARE_EXCEPTION_HELPER(Swig::DirectorException,string exceptiontypename, string message)
+SWIG_DIRECTOR_DECLARE_EXCEPTION_HELPER(SwigDirector_signal_$descriptor(Swig::DirectorException)_$module,string exceptiontypename, string message)
