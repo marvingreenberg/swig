@@ -4004,7 +4004,7 @@ public:
 
     String * directorexcept = Getattr(n, "feature:director:except");
 
-    if (!directorexcept) {
+    if (!directorexcept || Cmp(directorexcept,"1") == 0) {
       directorexcept = NewString("");
       Printf(directorexcept, "\n  try {\n");
       Printf(directorexcept, "     $action;\n");
