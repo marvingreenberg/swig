@@ -20,11 +20,11 @@ matrix:
     - env: SWIGLANG=ruby CC=clang CXX=clang++
     - env: SWIGLANG=tcl CC=gcc-4.2 CXX=g++-4.2
     - env: SWIGLANG=tcl CC=clang CXX=clang++
-  allow_failures:
     - env: SWIGLANG=csharp CC=gcc-4.2 CXX=g++-4.2
     - env: SWIGLANG=csharp CC=clang CXX=clang++
     - env: SWIGLANG=python PY3=1 CC=gcc-4.2 CXX=g++-4.2
     - env: SWIGLANG=python PY3=1 CC=clang CXX=clang++
+  allow_failures:
     - env: SWIGLANG=guile CC=gcc-4.2 CXX=g++-4.2
     - env: SWIGLANG=guile CC=clang CXX=clang++
     - env: SWIGLANG=octave SWIGJOBS=-j4 CC=gcc-4.2 CXX=g++-4.2
