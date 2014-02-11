@@ -570,7 +570,7 @@ java_compile: $(SRCS)
 # -----------------------------------------------------------------
 
 java_run:
-	env LD_LIBRARY_PATH=. $(RUNTOOL) $(JAVA) $(RUNME) $(RUNPIPE)
+	env LD_LIBRARY_PATH=. DYLD_LIBRARY_PATH=. $(RUNTOOL) $(JAVA) $(RUNME) $(RUNPIPE)
 
 # -----------------------------------------------------------------
 # Version display
@@ -714,7 +714,7 @@ mzscheme_cpp: $(SRCS)
 # -----------------------------------------------------------------
 
 mzscheme_run:
-	env LD_LIBRARY_PATH=. $(RUNTOOL) $(MZSCHEME) -r $(MZSCHEME_SCRIPT) $(RUNPIPE)
+	env LD_LIBRARY_PATH=. DYLD_LIBRARY_PATH=. $(RUNTOOL) $(MZSCHEME) -r $(MZSCHEME_SCRIPT) $(RUNPIPE)
 
 # -----------------------------------------------------------------
 # Version display
@@ -1176,7 +1176,7 @@ chicken_externalhdr:
 # -----------------------------------------------------------------
 
 chicken_run:
-	env LD_LIBRARY_PATH=. $(RUNTOOL) $(CHICKEN_CSI) $(CHICKEN_SCRIPT) $(RUNPIPE)
+	env LD_LIBRARY_PATH=. DYLD_LIBRARY_PATH=. $(RUNTOOL) $(CHICKEN_CSI) $(CHICKEN_SCRIPT) $(RUNPIPE)
 
 # -----------------------------------------------------------------
 # Version display
@@ -1237,7 +1237,7 @@ csharp_compile: $(SRCS)
 # -----------------------------------------------------------------
 
 csharp_run:
-	env LD_LIBRARY_PATH=. $(RUNTOOL) $(CSHARP_RUNME) $(RUNPIPE)
+	env LD_LIBRARY_PATH=. DYLD_LIBRARY_PATH=. $(RUNTOOL) $(CSHARP_RUNME) $(RUNPIPE)
 
 # -----------------------------------------------------------------
 # Version display
@@ -1654,7 +1654,7 @@ go_cpp: $(SRCS)
 # -----------------------------------------------------------------
 
 go_run:
-	env LD_LIBRARY_PATH=.:$$LD_LIBRARY_PATH $(RUNTOOL) ./$(RUNME) $(RUNPIPE)
+	env LD_LIBRARY_PATH=.:$$LD_LIBRARY_PATH DYLD_LIBRARY_PATH=.:$$DYLD_LIBRARY_PATH $(RUNTOOL) ./$(RUNME) $(RUNPIPE)
 
 # -----------------------------------------------------------------
 # Version display
