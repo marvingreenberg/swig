@@ -30,8 +30,7 @@ before_install:
   - ls -la $(which $CXX)
   - brew install pcre
   - brew install boost
-#  - if test "$SWIGLANG" = "csharp"; then brew install https://gist.github.com/shtirlic/4696903/raw/243c2f92961a285bb721aa67954c1efee4cd6a84/mono.rb; fi
-  - if test "$SWIGLANG" = "csharp"; then Tools/brew install https://gist.github.com/raw/4696903/243c2f92961a285bb721aa67954c1efee4cd6a84/mono.rb; fi
+  - if test "$SWIGLANG" = "csharp"; then Tools/brew-install https://gist.github.com/raw/4696903/243c2f92961a285bb721aa67954c1efee4cd6a84/mono.rb; fi
 #  - if test "$SWIGLANG" = "go"; then go env | sed -e 's/^/export /' > goenvsetup && source goenvsetup && rm -f goenvsetup; fi # Until configure.ac is fixed
   - if test "$SWIGLANG" = "guile"; then Tools/brew-install guile; fi
   - if test "$SWIGLANG" = "lua"; then brew install lua; fi
