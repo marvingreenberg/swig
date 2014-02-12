@@ -31,7 +31,6 @@ before_install:
   - brew install pcre
   - brew install boost
   - if test "$SWIGLANG" = "csharp"; then brew install https://dl.dropboxusercontent.com/u/696131/Homebrew/mono.rb; fi
-# For go, with clang on OSX, need go 1.2
   - if test "$SWIGLANG" = "go" -a "$CC" = "clang" ; then brew install go; echo "go: which go"; fi
   - if test "$SWIGLANG" = "guile"; then Tools/brew-install guile; fi
   - if test "$SWIGLANG" = "lua"; then brew install lua; fi
