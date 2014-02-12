@@ -6,15 +6,15 @@ matrix:
   include:
     - env: SWIGLANG=csharp CC=clang CXX=clang++
     - env: SWIGLANG=go CC=clang CXX=clang++
-    - env: SWIGLANG=java CC=clang CXX=clang++
-    - env: SWIGLANG=lua CC=clang CXX=clang++
-    - env: SWIGLANG=perl5 CC=clang CXX=clang++
-    - env: SWIGLANG=php CC=clang CXX=clang++
-    - env: SWIGLANG=python CC=clang CXX=clang++
-    - env: SWIGLANG=python PY3=1 CC=clang CXX=clang++
-    - env: SWIGLANG=ruby CC=clang CXX=clang++
-    - env: SWIGLANG=tcl CC=clang CXX=clang++
-    - env: SWIGLANG=guile CC=clang CXX=clang++
+#    - env: SWIGLANG=java CC=clang CXX=clang++
+#    - env: SWIGLANG=lua CC=clang CXX=clang++
+#    - env: SWIGLANG=perl5 CC=clang CXX=clang++
+#    - env: SWIGLANG=php CC=clang CXX=clang++
+#    - env: SWIGLANG=python CC=clang CXX=clang++
+#    - env: SWIGLANG=python PY3=1 CC=clang CXX=clang++
+#    - env: SWIGLANG=ruby CC=clang CXX=clang++
+#    - env: SWIGLANG=tcl CC=clang CXX=clang++
+#    - env: SWIGLANG=guile CC=clang CXX=clang++
   allow_failures:
     - env: SWIGLANG=octave SWIGJOBS=-j4 CC=clang CXX=clang++
 before_install:
@@ -30,12 +30,14 @@ before_install:
   - ls -la $(which $CXX)
   - brew install pcre
   - brew install boost
-  - if test "$SWIGLANG" = "csharp"; then Tools/brew-install https://gist.github.com/raw/4696903/243c2f92961a285bb721aa67954c1efee4cd6a84/mono.rb; fi
-#  - if test "$SWIGLANG" = "go"; then go env | sed -e 's/^/export /' > goenvsetup && source goenvsetup && rm -f goenvsetup; fi # Until configure.ac is fixed
+  - if test "$SWIGLANG" = "csharp"; then brew install https://dl.dropboxusercontent.com/u/696131/Homebrew/mono.rb; fi
+# For go, with clang on OSX, need go 1.2
+  - if test "$SWIGLANG" = "go" -a "$CC" = "clang" ; then brew install go; echo "go: which go"; fi
   - if test "$SWIGLANG" = "guile"; then Tools/brew-install guile; fi
   - if test "$SWIGLANG" = "lua"; then brew install lua; fi
   - if test "$SWIGLANG" = "python" -a "$PY3"; then brew install python3 && brew list -v python3; fi
 script:
+  - echo "PATH: $PATH"
   - ./autogen.sh && ./configure
   - make -s $SWIGJOBS
   - ./swig -version && ./swig -pcreversion
