@@ -2021,7 +2021,9 @@ if test x"${GOBIN}" = xno -o x"${with_alllang}" = xno ; then
 else
 
   AC_MSG_NOTICE([Calculating GO Parameters])
-  $GO --help 2>/dev/null | grep gccgo || echo "Didn't seem to see gccgo"
+  $GO --help 2>/dev/null | grep gccgo && "Saw gccgo" || echo "Didn't seem to see gccgo"
+  which go
+  echo "GOBIN $GOBIN"
 
   if test "x$GOBIN" = xyes; then
     AC_CHECK_PROGS(GO, go 6g 8g gccgo)
@@ -2099,6 +2101,10 @@ else
       GO13=false
     fi
   fi
+fi
+
+if test "$CLANGXX" = "yes" -a "$GO12" = "false"; then
+     AC_MSG_WARN(Clang compiler requires GO version 1.2)
 fi
 
 AC_SUBST(GOGCC)
