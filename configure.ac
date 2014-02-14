@@ -2037,6 +2037,7 @@ else
   GOVERSIONOPTION=
   if test -n "$GO" ; then
     if $GO --help 2>/dev/null | grep gccgo >/dev/null 2>&1 ; then
+      AC_MSG_NOTICE([Using GCCGO Strangely]}
       GOGCC=true
       GOVERSIONOPTION=--version
       AC_MSG_CHECKING([whether gccgo version is too old])
