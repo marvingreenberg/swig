@@ -356,11 +356,14 @@ fi
 # libc++ for tests and examples to run under mono. May affect 
 # other language targets as well - problem is an OSX incompatibility
 # between libraries depending on libstdc++ and libc++.
+# GOSTDLIB needs to agree with libraries used to build generated tests
 CLANGXX=
+GOSTDLIB=-lstdc++
 $CXX -v 2>&1 | grep -i clang >/dev/null && CLANGXX=yes
 case $host in
   *-*-darwin11* | *-*-darwin12* |*-*-darwin13*  ) if test "$CLANGXX" = "yes";
-    then PLATCXXFLAGS="$PLATCXXFLAGS -stdlib=libc++"
+    then PLATCXXFLAGS="$PLATCXXFLAGS -stdlib=libc++";
+    GOSTDLIB=-lc++
     fi;;
   *) ;;
 esac
@@ -374,6 +377,7 @@ AC_SUBST(TRYLINKINGWITHCXX)
 AC_SUBST(RPATH)
 AC_SUBST(PLATCFLAGS)
 AC_SUBST(PLATCXXFLAGS)
+AC_SUBST(GOSTDLIB)
 AC_SUBST(HAVE_CXX11_COMPILER)
 AC_SUBST(LINKFORSHARED)
 

@@ -43,6 +43,8 @@ LIBCRYPT   = @LIBCRYPT@
 SYSLIBS    = $(LIBM) $(LIBC) $(LIBCRYPT)
 LIBPREFIX  =
 
+GOSTDLIB= @GOSTDLIB@
+
 # RUNTOOL is for use with runtime tools, eg set it to valgrind
 RUNTOOL    =
 # COMPILETOOL is a way to run the compiler under another tool, or more commonly just to stop the compiler executing
@@ -1641,7 +1643,7 @@ go_cpp: $(SRCS)
 	if test -f $(RUNME).go; then \
 	  $(GO) $(GOCOMPILEARG) $(RUNME).go; \
 	  if $(GOGCC) ; then \
-	    $(COMPILETOOL) $(GO) -o $(RUNME) $(RUNME).@OBJEXT@ $(GOGCCOBJS) $(OBJS) $(IOBJS) -lstdc++; \
+	    $(COMPILETOOL) $(GO) -o $(RUNME) $(RUNME).@OBJEXT@ $(GOGCCOBJS) $(OBJS) $(IOBJS) $(GOSTDLIB); \
 	  elif $(GO12) || $(GO13); then \
 	    $(COMPILETOOL) $(GOTOOL) $(GOLD) -linkmode external -extld $(CXX) -extldflags "$(CXXFLAGS)" -o $(RUNME) $(RUNME).$(GOOBJEXT); \
 	  else \
