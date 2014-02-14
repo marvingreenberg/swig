@@ -2031,6 +2031,9 @@ else
     GO="$GOBIN"
   fi
 
+  echo "GOBIN $GOBIN"
+
+  ALTGOGCC=false
   GOGCC=false
   GO1=false
   GO12=false
@@ -2038,6 +2041,8 @@ else
   GOOPTbrew uninstall =
   GOVERSIONOPTION=
   if test -n "$GO" ; then
+    $GO --help 2>/dev/null | grep gccgo && ALTGOGCC=true
+
     if $GO --help 2>/dev/null | grep gccgo >/dev/null 2>&1 ; then
       AC_MSG_NOTICE([Using GCCGO Strangely])
       GOGCC=true
@@ -2103,9 +2108,13 @@ else
   fi
 fi
 
+AC_MSG_NOTICE(ALTGOGCC: $ALTGOGCC)
+AC_MSG_NOTICE(CLANGXX_GO12: $CLANGXX $GO12) 
 if test "$CLANGXX" = "yes" -a "$GO12" = "false"; then
      AC_MSG_WARN(Clang compiler requires GO version 1.2)
 fi
+
+AC_MSG_NOTICE(GO_GOGCC_GOC_GO12: $GO $GOGCC $GOC $GO12)
 
 AC_SUBST(GOGCC)
 AC_SUBST(GO)
