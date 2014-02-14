@@ -2020,6 +2020,9 @@ if test x"${GOBIN}" = xno -o x"${with_alllang}" = xno ; then
   GOVERSIONOPTION=
 else
 
+  AC_MSG_NOTICE([Calculating GO Parameters])
+  $GO --help 2>/dev/null | grep gccgo || echo "Didn't seem to see gccgo"
+
   if test "x$GOBIN" = xyes; then
     AC_CHECK_PROGS(GO, go 6g 8g gccgo)
   else
@@ -2030,7 +2033,7 @@ else
   GO1=false
   GO12=false
   GO13=false
-  GOOPT=
+  GOOPTbrew uninstall =
   GOVERSIONOPTION=
   if test -n "$GO" ; then
     if $GO --help 2>/dev/null | grep gccgo >/dev/null 2>&1 ; then
