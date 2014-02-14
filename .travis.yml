@@ -1,10 +1,10 @@
 language: objective-c
 env:
-  - SWIGLANG= CC=gcc-4.2 CXX=g++-4.2
+# - SWIGLANG= CC=gcc-4.2 CXX=g++-4.2
   - SWIGLANG= CC=clang CXX=clang++
 matrix:
   include:
-    - env: SWIGLANG=csharp CC=clang CXX=clang++
+#   - env: SWIGLANG=csharp CC=clang CXX=clang++
     - env: SWIGLANG=go CC=clang CXX=clang++
 #    - env: SWIGLANG=java CC=clang CXX=clang++
 #    - env: SWIGLANG=lua CC=clang CXX=clang++
@@ -28,23 +28,22 @@ before_install:
   - $CXX --version
   - ls -la $(which $CC)
   - ls -la $(which $CXX)
-  - brew install pcre
-  - brew install boost
+#  - brew install pcre
+#  - brew install boost
   - if test "$SWIGLANG" = "csharp"; then brew install https://dl.dropboxusercontent.com/u/696131/Homebrew/mono.rb; fi
-  - if test "$SWIGLANG" = "go" -a "$CC" = "clang" ; then brew install go; which go; fi
+  - if test "$SWIGLANG" = "go" -a "$CC" = "clang" ; then brew upgrade go; go version; which go; fi
   - if test "$SWIGLANG" = "guile"; then Tools/brew-install guile; fi
   - if test "$SWIGLANG" = "lua"; then brew install lua; fi
   - if test "$SWIGLANG" = "python" -a "$PY3"; then brew install python3 && brew list -v python3; fi
 script:
-  - echo "PATH: $PATH"
-  - ./autogen.sh && ./configure
+  - ./autogen.sh && ./configure --with-boost=no --without-pcre
   - make -s $SWIGJOBS
   - ./swig -version && ./swig -pcreversion
   - if test -z "$SWIGLANG"; then make -s $SWIGJOBS check-ccache; fi
   - if test -z "$SWIGLANG"; then make -s $SWIGJOBS check-errors-test-suite; fi
   - if test -n "$SWIGLANG"; then make -s check-$SWIGLANG-version; fi
-  - if test -n "$SWIGLANG"; then make -k $SWIGJOBS check-$SWIGLANG-examples; fi
-  - if test -n "$SWIGLANG"; then make -k $SWIGJOBS check-$SWIGLANG-test-suite; fi
+#  - if test -n "$SWIGLANG"; then make -k $SWIGJOBS check-$SWIGLANG-examples; fi
+  - if test -n "$SWIGLANG"; then make -k $SWIGJOBS check-$SWIGLANG-test-suite FLAGS= C_TEST_CASES= CPP_TEST_CASES=default_args MULTI_CPP_TEST_CASES= ; fi
 branches:
   only:
     - travis_clang_fixes
