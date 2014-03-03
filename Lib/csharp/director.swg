@@ -36,8 +36,10 @@
 #endif
 
 typedef void (*Swig_exceptionthrowfn_t)(void *&);
-static THREAD_LOCAL void * Swig_pendingException = 0;
-static THREAD_LOCAL Swig_exceptionthrowfn_t  Swig_throwfn = 0;
+
+// NOTE: These two vars must be manually defined in exactly one module
+extern THREAD_LOCAL void * Swig_pendingException;
+extern THREAD_LOCAL Swig_exceptionthrowfn_t  Swig_throwfn;
 
 namespace Swig {
   /* Director base class - not currently used in C# directors */
