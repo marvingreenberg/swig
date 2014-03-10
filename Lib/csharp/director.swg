@@ -37,9 +37,27 @@
 
 typedef void (*Swig_exceptionthrowfn_t)(void *&);
 
-// NOTE: These two vars must be manually defined in exactly one module
-extern THREAD_LOCAL void * Swig_pendingException;
-extern THREAD_LOCAL Swig_exceptionthrowfn_t  Swig_throwfn;
+#ifdef SWIG_DIRECTOR_EXCEPTION_DATA_EXTERN
+
+extern void*& Swig_getPendingExceptionHandle();
+extern Swig_exceptionthrowfn_t&  Swig_getThrowfnHandle();
+
+#else
+
+THREAD_LOCAL void* Swig_pendingException = 0;
+THREAD_LOCAL Swig_exceptionthrowfn_t Swig_throwfn = 0;
+
+SWIGEXPORT void*& Swig_getPendingExceptionHandle()
+{
+  return Swig_pendingException;
+}
+
+SWIGEXPORT Swig_exceptionthrowfn_t& Swig_getThrowfnHandle()
+{
+  return Swig_throwfn;
+}
+
+#endif
 
 namespace Swig {
   /* Director base class - not currently used in C# directors */
@@ -77,8 +95,8 @@ namespace Swig {
 }
 
 static inline SWIGUNUSED void SwigDirector_throwIfSignaledException() {
-  if (Swig_pendingException)
-    (*Swig_throwfn)(Swig_pendingException);
+  if (Swig_getPendingExceptionHandle())
+    (*Swig_getThrowfnHandle())(Swig_getPendingExceptionHandle());
 }
 
 static void SWIGUNUSED SwigDirector_throw_Swig_DirectorException(void *& exception) {
@@ -97,9 +115,9 @@ extern "C"
 #endif
 SWIGEXPORT void SWIGSTDCALL SwigDirector_signal_SWIGTYPE_Swig__DirectorException_$module(const char * exceptiontypename, const char * msg) {
   // TODO see comment in csharp.swg, macro SWIG_DIRECTOR_DECLARE_EXCEPTION_HELPER_INTERNAL
-  if (Swig_pendingException == 0) { 
-    Swig_pendingException = reinterpret_cast<void *>(new Swig::DirectorException(exceptiontypename,msg));
-    Swig_throwfn = &SwigDirector_throw_Swig_DirectorException;
+  if (Swig_getPendingExceptionHandle() == 0) { 
+    Swig_getPendingExceptionHandle() = reinterpret_cast<void *>(new Swig::DirectorException(exceptiontypename,msg));
+    Swig_getThrowfnHandle() = &SwigDirector_throw_Swig_DirectorException;
   }
 }
 
