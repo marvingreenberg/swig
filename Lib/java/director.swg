@@ -353,7 +353,7 @@ namespace Swig {
   };
 
   // Helper method to determine if a Java throwable matches a particular Java class type
-  bool ExceptionMatches(JNIEnv *jenv, jthrowable throwable, const char *classname) {
+  static SWIGUNUSED bool ExceptionMatches(JNIEnv *jenv, jthrowable throwable, const char *classname) {
     bool matches = false;
 
     if (throwable && jenv && classname) {

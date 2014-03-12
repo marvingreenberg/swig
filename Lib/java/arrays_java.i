@@ -38,7 +38,7 @@ static JNITYPE##Array SWIG_JavaArrayOut##JFUNCNAME (JNIEnv *jenv, CTYPE *result,
 %define JAVA_ARRAYS_IMPL(CTYPE, JNITYPE, JAVATYPE, JFUNCNAME)
 %{
 /* CTYPE[] support */
-static int SWIG_JavaArrayIn##JFUNCNAME (JNIEnv *jenv, JNITYPE **jarr, CTYPE **carr, JNITYPE##Array input) {
+static SWIGUNUSED int SWIG_JavaArrayIn##JFUNCNAME (JNIEnv *jenv, JNITYPE **jarr, CTYPE **carr, JNITYPE##Array input) {
   int i;
   jsize sz;
   if (!input) {
@@ -63,7 +63,7 @@ static int SWIG_JavaArrayIn##JFUNCNAME (JNIEnv *jenv, JNITYPE **jarr, CTYPE **ca
   return 1;
 }
 
-static void SWIG_JavaArrayArgout##JFUNCNAME (JNIEnv *jenv, JNITYPE *jarr, CTYPE *carr, JNITYPE##Array input) {
+static SWIGUNUSED void SWIG_JavaArrayArgout##JFUNCNAME (JNIEnv *jenv, JNITYPE *jarr, CTYPE *carr, JNITYPE##Array input) {
   int i;
   jsize sz = JCALL1(GetArrayLength, jenv, input);
   for (i=0; i<sz; i++)
@@ -71,7 +71,7 @@ static void SWIG_JavaArrayArgout##JFUNCNAME (JNIEnv *jenv, JNITYPE *jarr, CTYPE 
   JCALL3(Release##JAVATYPE##ArrayElements, jenv, input, jarr, 0);
 }
 
-static JNITYPE##Array SWIG_JavaArrayOut##JFUNCNAME (JNIEnv *jenv, CTYPE *result, jsize sz) {
+static SWIGUNUSED JNITYPE##Array SWIG_JavaArrayOut##JFUNCNAME (JNIEnv *jenv, CTYPE *result, jsize sz) {
   JNITYPE *arr;
   int i;
   JNITYPE##Array jresult = JCALL1(New##JAVATYPE##Array, jenv, sz);
